@@ -1,4 +1,5 @@
 import cv2
+import numpy
 import os
 import sys
 import xlwt
@@ -8,12 +9,14 @@ import pytesser
 
 BINS_PER_ROW = 9
 MIN_RADIUS_FACTOR = 0.4
-MAX_RADIUS_FACTOR = 1.4
-RADIUS_VARIATION = 0.2
+MAX_RADIUS_FACTOR = 15
+RADIUS_VARIATION = 1
+CONTRAST_FACTOR = 1
+EDGE_THRESHOLD = 100
 
 def main():
 	output_path = sys.argv[1] if len(sys.argv) >= 2 else 'output.xlsx'
-	image_paths = sys.argv[2:] if False else ['unrotated.jpg', 'rotated.jpg']
+	image_paths = sys.argv[2:] if False else ['rotated.jpg', 'unrotated.jpg'][:1]
 	workbook = xlwt.Workbook()
 	for image_path in image_paths:
 		sheet = workbook.add_sheet(os.path.basename(image_path).split('.')[0])
@@ -23,11 +26,7 @@ def main():
 			text = label.get_text()
 			label.place_text(text, sheet)
 	# workbook.save(output_path)
-
-def show(image):
-	cv2.imshow('image', image)
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
+	
 
 def get_labels(image_path):
 	image = cv2.imread(image_path)
@@ -38,10 +37,13 @@ def get_labels(image_path):
 	minRadius = expected_radius * MIN_RADIUS_FACTOR
 	maxRadius = expected_radius * MAX_RADIUS_FACTOR
 
-	circle_tuples = cv2.HoughCircles(find_circles_image, cv2.cv.CV_HOUGH_GRADIENT, 1., minRadius, minRadius=minRadius, maxRadius=maxRadius)[0]; print circle_tuples
+	circle_tuples = cv2.HoughCircles(find_circles_image, cv2.cv.CV_HOUGH_GRADIENT, 1., minRadius, minRadius=int(minRadius), maxRadius=int(maxRadius))
 
 	if circle_tuples is None:
 		raise RuntimeError("no circles were found in image %s" % image_path)
+	else:
+		circle_tuples = circle_tuples[0]
+		print circle_tuples
 
 	circles = get_circles(circle_tuples)
 	labels = [Label(circle, image) for circle in circles]
@@ -49,7 +51,9 @@ def get_labels(image_path):
 
 def build_find_circles_image(image):
 	find_circles_image = image
-	find_circles_image = cv2.cvtColor(find_circles_image, cv2.COLOR_BGR2GRAY)
+	find_circles_image = cv2.Canny(find_circles_image, EDGE_THRESHOLD, EDGE_THRESHOLD*3) # maybe also denoise
+	cv2.imshow('hi', find_circles_image)
+	cv2.waitKey(0)
 	return find_circles_image
 
 def get_circles(circle_tuples):
