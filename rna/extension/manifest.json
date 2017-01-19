@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+
+  "name": "Ensembl Extractor",
+  "description": "This extension extracts elements from an ensembl thingy and writes them as a csv",
+  "version": "1.0",
+
+  "browser_action": {
+    "default_icon": "ensembl.png"
+  },
+  "icons": {
+    "16": "ensembl.png",
+    "48": "ensembl.png",
+    "128": "ensembl.png"
+  },
+  "permissions": [
+    "background",
+    "activeTab"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}
