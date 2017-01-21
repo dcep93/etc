@@ -1,21 +1,27 @@
 chrome.browserAction.onClicked.addListener(function(tab) {
 	if (tab.url.indexOf("http://uswest.ensembl.org/Mus_musculus/Location/View?") == 0) {
-		main(tab.url);
+		var range = [93000000, 94000000];
+		var regex = "RNA";
+		var regexFlags = "";
+		main(range, regex, regexFlags, tab);
 	}
 });
 
-function main(baseURL) {
+function main(range, regex, regexFlags, tab) {
+	startProcessing(tab.id);
 	var allData = {
 		"bottomURLQuery": undefined,
 		"keys": ["Gene", "Location", "Gene type"],
-		"range": [93000000, 110000000],
 		"windowSize": 1000000,
 		"queue": 1,
 		"data": [],
-		"baseURL": baseURL
+		"tabID": tab.id,
+		"baseURL": tab.url,
+		"title": tab.title,
+		"timeout": undefined
 	};
 	allData.bottomURLQuery = setBottomURLQuery(allData);
-	for (var i=allData.range[0];i<allData.range[1];i+=allData.windowSize) {
+	for (var i=range[0];i<range[1];i+=allData.windowSize) {
 		collectData(i, allData);
 	}
 	tryToSave(allData);
@@ -39,7 +45,7 @@ function setBottomURLQuery(allData) {
 function collectData(start, allData) {
 	var end = start + allData.windowSize;
 	var url = "http://uswest.ensembl.org/Mus_musculus/Component/Location/View/bottom?" + allData.bottomURLQuery + start + "-" + end;
-	getResponse(allData, url, function(responseText) {
+	getResponse("collectData", url, allData, function(responseText) {
 		var html = document.createElement('html');
 	  	html.innerHTML = responseText;
 		getFromScreen(html, allData);
@@ -55,9 +61,10 @@ function getFromScreen(html, allData) {
 	}
 }
 
-function getFromBottom(url, allData) {
-	if (url.indexOf('calling_sp') !== -1) {
-		getResponse(allData, "http://uswest.ensembl.org/" + url, function(json) {
+function getFromBottom(path, allData) {
+	if (path.indexOf('calling_sp') !== -1) {
+		var url = "http://uswest.ensembl.org/" + path;
+		getResponse("getFromBottom", url, allData, function(json) {
 			getFromJson(JSON.parse(json)["features"][0], allData);
 		});
 	}
@@ -87,26 +94,23 @@ function toSave(data) {
 	if (geneType === undefined) {
 		return false;
 	}
-	return geneType.indexOf("RNA") !== -1
+	if (geneType.indexOf("RNA") === 1) {
+		return true;
+	}
+	return false;
 }
 
-function makeHttpObject() {
-  try {return new XMLHttpRequest();}
-  catch (error) {}
-  try {return new ActiveXObject("Msxml2.XMLHTTP");}
-  catch (error) {}
-  try {return new ActiveXObject("Microsoft.XMLHTTP");}
-  catch (error) {}
-
-  throw new Error("Could not create HTTP request object.");
-}
-
-function getResponse(allData, url, callback) {
-	console.log(url);
+function getResponse(name, url, allData, callback) {
+	console.log(name, url);
 	allData.queue++;
-	var request = makeHttpObject();
+	var request = new XMLHttpRequest();
 	request.open("GET", url, true);
 	request.send(null);
+	clearTimeout(allData.timeout);
+	allData.timeout = setTimeout(function() {
+		finish(allData, false);
+	}, 10000);
+	startProcessing(allData.tabID);
 	request.onreadystatechange = function() {
 	  if (request.readyState == 4) {
 	  	callback(request.responseText);
@@ -118,9 +122,32 @@ function getResponse(allData, url, callback) {
 function tryToSave(allData) {
 	allData.queue--;
 	if (allData.queue == 0) {
+		clearTimeout(allData.timeout);
+		var csv = allData.keys.join(",") + "," + allData.title + ",\n";
 		for (var data of allData.data) {
-			console.log(data);
+			csv += allData.keys.map(function(i) { return data[i]; }) + "\n";
 		}
-		alert("made it to the end!!!!");
+		var blob = new Blob([csv]);
+		var url = URL.createObjectURL(blob);
+		var filename = encodeURIComponent(allData.title) + ".csv";
+		chrome.downloads.download({"filename": allData.title, "saveAs": true, "url": url});
+		finish(allData, true);
+	}
+}
+
+function startProcessing(tabID) {
+	chrome.browserAction.setBadgeText({"text": "...", "tabId": tabID});
+	if (!processingTabs.has(tabID)) {
+		processingTabs.add(tabID);
+	}
+}
+
+function finish(allData, success) {
+	processingTabs.delete(allData.tabID);
+	if (success) {
+		chrome.browserAction.setBadgeText({"text": "\u2713", "tabId": allData.tabID});
+	} else {
+		chrome.browserAction.setBadgeText({"text": "!", "tabId": allData.tabID});
+		alert('Something went wrong when processing ' + allData.title)
 	}
 }
