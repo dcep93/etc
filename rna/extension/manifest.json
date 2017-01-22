@@ -6,7 +6,8 @@
   "version": "1.0",
 
   "browser_action": {
-    "default_icon": "ensembl.png"
+    "default_icon": "ensembl.png",
+    "default_popup": "popup.html"
   },
   "icons": {
     "16": "ensembl.png",
@@ -16,7 +17,8 @@
   "permissions": [
     "background",
     "downloads",
-    "<all_urls>"
+    "tabs",
+    "http://uswest.ensembl.org/"
   ],
   "background": {
     "scripts": ["background.js"]

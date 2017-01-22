@@ -1,24 +1,29 @@
-chrome.browserAction.onClicked.addListener(function(tab) {
-	if (tab.url.indexOf("http://uswest.ensembl.org/Mus_musculus/Location/View?") == 0) {
-		var range = [93000000, 94000000];
-		var regex = "RNA";
-		var regexFlags = "";
-		main(range, regex, regexFlags, tab);
-	}
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+	sendResponse({"received": true});
+	console.log(request);
+	var range = [request.rangeStart, request.rangeEnd];
+	var regex = request.regex;
+	var ignoreCase = request.ignoreCase;
+	var tabID = request.tabID;
+	var url = request.url;
+	var title = request.title;
+	main(range, regex, ignoreCase, tabID, url, title);
 });
 
-function main(range, regex, regexFlags, tab) {
-	startProcessing(tab.id);
+function main(range, regex, ignoreCase, tabID, url, title) {
+	console.log("")
+	startProcessing(tabID);
 	var allData = {
 		"bottomURLQuery": undefined,
 		"keys": ["Gene", "Location", "Gene type"],
 		"windowSize": 1000000,
 		"queue": 1,
 		"data": [],
-		"tabID": tab.id,
-		"baseURL": tab.url,
-		"title": tab.title,
-		"timeout": undefined
+		"tabID": tabID,
+		"baseURL": url,
+		"title": title,
+		"timeout": undefined,
+		"regexp": new RegExp(regex, ignoreCase ? "i" : undefined)
 	};
 	allData.bottomURLQuery = setBottomURLQuery(allData);
 	for (var i=range[0];i<range[1];i+=allData.windowSize) {
@@ -73,7 +78,7 @@ function getFromBottom(path, allData) {
 function getFromJson(json, allData) {
 	var data = {"caption": json["caption"]};
 	loadData(json["entries"], allData.keys, data);
-	if (toSave(data)) {
+	if (toSave(data, allData)) {
 		allData.data.push(data);
 	}
 }
@@ -89,12 +94,12 @@ function loadData(entries, keys, data) {
 	}
 }
 
-function toSave(data) {
+function toSave(data, allData) {
 	var geneType = data["Gene type"];
 	if (geneType === undefined) {
 		return false;
 	}
-	if (geneType.indexOf("RNA") === 1) {
+	if (geneType.match(allData.regexp) !== null) {
 		return true;
 	}
 	return false;
@@ -109,7 +114,7 @@ function getResponse(name, url, allData, callback) {
 	clearTimeout(allData.timeout);
 	allData.timeout = setTimeout(function() {
 		finish(allData, false);
-	}, 10000);
+	}, 20000);
 	startProcessing(allData.tabID);
 	request.onreadystatechange = function() {
 	  if (request.readyState == 4) {
@@ -123,27 +128,23 @@ function tryToSave(allData) {
 	allData.queue--;
 	if (allData.queue == 0) {
 		clearTimeout(allData.timeout);
-		var csv = allData.keys.join(",") + "," + allData.title + ",\n";
-		for (var data of allData.data) {
-			csv += allData.keys.map(function(i) { return data[i]; }) + "\n";
+		var csv = ["index"].concat(allData.keys).concat(allData.title).join(",") + "\n";
+		for (var index in allData.data) {
+			csv += [index].concat(allData.keys.map(function(i) { return allData.data[index][i]; })).join(",") + "\n";
 		}
 		var blob = new Blob([csv]);
 		var url = URL.createObjectURL(blob);
 		var filename = encodeURIComponent(allData.title) + ".csv";
-		chrome.downloads.download({"filename": allData.title, "saveAs": true, "url": url});
+		chrome.downloads.download({"filename": filename, "saveAs": true, "url": url});
 		finish(allData, true);
 	}
 }
 
 function startProcessing(tabID) {
 	chrome.browserAction.setBadgeText({"text": "...", "tabId": tabID});
-	if (!processingTabs.has(tabID)) {
-		processingTabs.add(tabID);
-	}
 }
 
 function finish(allData, success) {
-	processingTabs.delete(allData.tabID);
 	if (success) {
 		chrome.browserAction.setBadgeText({"text": "\u2713", "tabId": allData.tabID});
 	} else {
