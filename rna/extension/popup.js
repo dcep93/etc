@@ -5,6 +5,9 @@ chrome.tabs.query({"active": true, "currentWindow": true}, function(tabs) {
 	if (url.match(urlInput.pattern)) {
 		urlInput.value = url;
 	}
+	document.getElementById('regex').value = "RNA"
+	document.getElementById('range_start').value = 93000000
+	document.getElementById('range_end').value = 94000000
 });
 
 document.getElementById("form").onsubmit = function() {

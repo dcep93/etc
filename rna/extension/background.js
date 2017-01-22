@@ -11,7 +11,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 function main(range, regex, ignoreCase, tabID, url, title) {
-	console.log("")
 	startProcessing(tabID);
 	var allData = {
 		"bottomURLQuery": undefined,
@@ -25,6 +24,7 @@ function main(range, regex, ignoreCase, tabID, url, title) {
 		"timeout": undefined,
 		"regexp": new RegExp(regex, ignoreCase ? "i" : undefined)
 	};
+	window.ad = allData;
 	allData.bottomURLQuery = setBottomURLQuery(allData);
 	for (var i=range[0];i<range[1];i+=allData.windowSize) {
 		collectData(i, allData);
@@ -51,10 +51,15 @@ function collectData(start, allData) {
 	var end = start + allData.windowSize;
 	var url = "http://uswest.ensembl.org/Mus_musculus/Component/Location/View/bottom?" + allData.bottomURLQuery + start + "-" + end;
 	getResponse("collectData", url, allData, function(responseText) {
-		var html = document.createElement('html');
-	  	html.innerHTML = responseText;
+		var html = parseHTML(responseText);
 		getFromScreen(html, allData);
 	});
+}
+
+function parseHTML(string) {
+	var html = document.createElement('html');
+  	html.innerHTML = string;
+  	return html;
 }
 
 function getFromScreen(html, allData) {
@@ -127,10 +132,12 @@ function getResponse(name, url, allData, callback) {
 function tryToSave(allData) {
 	allData.queue--;
 	if (allData.queue == 0) {
+		console.log(allData.data);
 		clearTimeout(allData.timeout);
-		var csv = ["index"].concat(allData.keys).concat(allData.title).join(",") + "\n";
+		var csv = ["index"].concat(allData.keys).concat(enquote(allData.title)).join(",") + "\n";
 		for (var index in allData.data) {
-			csv += [index].concat(allData.keys.map(function(i) { return allData.data[index][i]; })).join(",") + "\n";
+			allData.data[index].Location = parseHTML(allData.data[index].Location).getElementsByTagName("a")[0].innerHTML;
+			csv += [index].concat(allData.keys.map(function(i) { return enquote(allData.data[index][i]); })).join(",") + "\n";
 		}
 		var blob = new Blob([csv]);
 		var url = URL.createObjectURL(blob);
@@ -138,6 +145,10 @@ function tryToSave(allData) {
 		chrome.downloads.download({"filename": filename, "saveAs": true, "url": url});
 		finish(allData, true);
 	}
+}
+
+function enquote(string) {
+	return "\"" + string + "\""
 }
 
 function startProcessing(tabID) {
