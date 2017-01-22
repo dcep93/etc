@@ -157,7 +157,7 @@ function startProcessing(tabID) {
 
 function finish(allData, success) {
 	if (success) {
-		chrome.browserAction.setBadgeText({"text": "\u2713", "tabId": allData.tabID});
+		chrome.browserAction.setBadgeText({"text": allData.data.length.toString(), "tabId": allData.tabID});
 	} else {
 		chrome.browserAction.setBadgeText({"text": "!", "tabId": allData.tabID});
 		alert('Something went wrong when processing ' + allData.title)
