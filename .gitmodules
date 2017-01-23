@@ -1,3 +1,0 @@
-[submodule "pic_to_text/Pytesser"]
-	path = pic_to_text/Pytesser
-	url = https://github.com/RobinDavid/Pytesser.git
