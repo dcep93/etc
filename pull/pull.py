@@ -88,7 +88,7 @@ def urlToPath(url, matchURL, extensions):
 	return "." + path
 
 def defaultPath(path, extensions):
-	for extension in [".js", ".html", ".css"]+extensions:
+	for extension in [".js", ".html", ".css"] + extensions:
 		if path.endswith(extension):
 			return False
 	return True

@@ -6,11 +6,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	var ignoreCase = request.ignoreCase;
 	var tabID = request.tabID;
 	var url = request.url;
+	var urlPrefix = request.urlPrefix;
+	var query = request.query;
 	var title = request.title;
-	main(range, regex, ignoreCase, tabID, url, title);
+	main(range, regex, ignoreCase, tabID, url, urlPrefix, query, title);
 });
 
-function main(range, regex, ignoreCase, tabID, url, title) {
+function main(range, regex, ignoreCase, tabID, url, urlPrefix, query, title) {
 	startProcessing(tabID);
 	var allData = {
 		"bottomURLQuery": undefined,
@@ -20,20 +22,22 @@ function main(range, regex, ignoreCase, tabID, url, title) {
 		"data": [],
 		"tabID": tabID,
 		"baseURL": url,
+		"urlPrefix": urlPrefix,
 		"title": title,
 		"timeout": undefined,
-		"regexp": new RegExp(regex, ignoreCase ? "i" : undefined)
+		"regexp": new RegExp(regex, ignoreCase ? "i" : undefined),
+		"range": range
 	};
 	window.ad = allData;
-	allData.bottomURLQuery = setBottomURLQuery(allData);
+	allData.bottomURLQuery = setBottomURLQuery(query);
 	for (var i=range[0];i<range[1];i+=allData.windowSize) {
-		collectData(i, allData);
+		collectData(i, range[1], allData);
 	}
 	tryToSave(allData);
 }
 
-function setBottomURLQuery(allData) {
-	var params = allData.baseURL.split('View?')[1].split(';');
+function setBottomURLQuery(query) {
+	var params = query.split(';');
 	var chromosomeNumber;
 	var urlQuery = "";
 	for (var param of params) {
@@ -47,9 +51,9 @@ function setBottomURLQuery(allData) {
 	return urlQuery;
 }
 
-function collectData(start, allData) {
-	var end = start + allData.windowSize;
-	var url = "http://uswest.ensembl.org/Mus_musculus/Component/Location/View/bottom?" + allData.bottomURLQuery + start + "-" + end;
+function collectData(start, end, allData) {
+	end = Math.min(end, start + allData.windowSize);
+	var url = allData.urlPrefix + "Component/Location/View/bottom?" + allData.bottomURLQuery + start + "-" + end;
 	getResponse("collectData", url, allData, function(responseText) {
 		var html = parseHTML(responseText);
 		getFromScreen(html, allData);
@@ -141,7 +145,8 @@ function tryToSave(allData) {
 		}
 		var blob = new Blob([csv]);
 		var url = URL.createObjectURL(blob);
-		var filename = encodeURIComponent(allData.title) + ".csv";
+		var filename = encodeURIComponent(allData.baseURL) + "___" + allData.range + "___" + encodeURIComponent(allData.regexp) + ".csv";
+		console.log(filename);
 		chrome.downloads.download({"filename": filename, "saveAs": true, "url": url});
 		finish(allData, true);
 	}

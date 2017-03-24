@@ -7,14 +7,14 @@
     <tr>
       <td>URL:</td>
       <td colspan="3">
-        <input style="width: 100%;" id="url" type="text" name="url" placeholder="http://uswest.ensembl.org/Mus_musculus/Location/View?..." pattern="http://uswest\.ensembl\.org/Mus_musculus/Location/View\?.+">
+        <input style="width: 100%;" id="url" type="text" name="url" placeholder="http://uswest.ensembl.org/Mus_musculus/Location/View?..." pattern="(http://\S+\.ensembl\.org/\S+/)(Gene/Summary|Location/View)\?(.+)">
       </td>
     </tr>
     <tr>
       <td>regex:</td>
       <td><input id="regex" type="text" name="regex"></td>
       <td>ignore case:</td>
-      <td><input id="ignore_case" type="checkbox" name="ignore_case"></td>
+      <td><input id="ignore_case" type="checkbox" checked name="ignore_case"></td>
     </tr>
     <tr>
       <td>start:</td>
