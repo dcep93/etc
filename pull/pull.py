@@ -5,11 +5,12 @@ import urllib2
 import sys
 
 pulledPages = {}
+options = {}
 
 def main():
-	startURL = sys.argv[1]
-	depth = int(sys.argv[2]) if len(sys.argv) > 2 else 1
-	extensions = sys.argv[2:]
+	options['startURL'] = sys.argv[1]
+	options['depth'] = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+	options['extensions'] = sys.argv[2:]
 #	cookieTxt = sys.argv[3] if len(sys.argv) > 3 else ""
 	cookieTxt = ""
 
@@ -24,12 +25,13 @@ def main():
 		cj.load(cookieTxt, ignore_discard=True, ignore_expires=True)
 		opener.add_handler(urllib2.HTTPCookieProcessor(cj))
 
-	pull(startURL, matchURL, depth, opener, extensions)
+	pull(options['startURL'], matchURL, depth, opener, extensions)
 	savePages(startURL, extensions)
+	print "success!"
 
-def pull(startURL, matchURL, depth, opener, extensions):
+def pull(startURL, matchURL, depth, args):
 	if depth == 0: return
-	page = getPage(startURL, opener)
+	page = getPage(startURL, depth, options)
 	pulledPages[urlToPulledPage(startURL, None)] = page
 	if page is None: return
 	downloadDependencies(page, opener, matchURL, startURL, extensions)
@@ -41,12 +43,12 @@ def pull(startURL, matchURL, depth, opener, extensions):
 			pulledPages[pulledPage] = None
 			nextRound.append(pulledPage)
 	for url in nextRound:
-		pull(url, matchURL, depth-1, opener, extensions)
+		pull(url, matchURL, depth-1, args)
 
 def urlToPulledPage(url, startURL):
 	if url.startswith('//'):
 		url = 'http:' + url
-	if not url.startswith('http://') and not url.startswith('/'):
+	if url.startswith('/'):
 		url = startURL + '/' + url
 	return url.strip("/")
 
@@ -105,8 +107,9 @@ def relativePath(childUrl, matchURL, parentURL, extensions):
 	rP = parentDirs + urlToPath(childUrl, matchURL, extensions)
 	return rP
 
-def getPage(url, opener):
-	html = read(url, opener)
+def getPage(url, depth, args):
+	print "  " * (args['maxdepth'] - depth) + url
+	html = read(url, args)
 	if html is None: return
 	page = BeautifulSoup(html, "lxml")
 	return page
@@ -115,7 +118,7 @@ def downloadDependencies(page, opener, matchURL, url, extensions):
 	for js in page.findAll("script", src=True):
 		if js['src'].startswith("//"):
 			js['src'] = "http:" + js['src']
-		js['src'] = downloadDependency(js['src'], opener, matchURL, url)
+		js['src'] = downloadDependency(js['src'], opener, matchURL, url, extensions)
 	for css in page.findAll("link", rel="stylesheet"):
 		if css['href'].startswith("//"):
 			css['href'] = "http:" + css['href']
@@ -131,18 +134,18 @@ def downloadDependency(url, opener, matchURL, parentURL, extensions):
 	if not saveURL.startswith(matchURL):
 		return fetchURL
 	text = read(fetchURL, opener)
+	if text is None: return
 	path = save(saveURL, text, matchURL, extensions)
 	rP = relativePath(saveURL, matchURL, parentURL, extensions)
-	if True or 'java' in url:	
-		print [url, saveURL, path, rP]
 	return rP
 
 def read(url, opener):
 	try:
 		return opener.open(url).read()
-	except urllib2.HTTPError:
-		print url
-		raise
+	except urllib2.HTTPError as e:
+		print "exception -", url
+		print e
+		return None
 
 
 if __name__ == "__main__":
