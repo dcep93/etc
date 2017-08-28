@@ -15,6 +15,10 @@
     "128": "the_doge.png"
   },
   "permissions": [
-    "activeTab"
-  ]
+    "activeTab",
+    "background"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
 }
