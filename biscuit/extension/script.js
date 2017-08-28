@@ -1,7 +1,14 @@
 chrome.extension.onMessage.addListener(
     function(request, sender, sendResponse) {
-        if(request.method == "getContent"){
-            sendResponse({success: true, innerHTML: document.body.innerHTML});
-        }
+    	switch (request.method) {
+    		case "getContent":
+    			sendResponse({success: true, innerHTML: document.body.innerHTML});
+    			break;
+    		case "noNewVideos":
+    			alert('No new videos detected!');
+    			break;
+    		default:
+    			console.log('default', request);
+    	}
     }
 );

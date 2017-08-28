@@ -14,9 +14,10 @@
 
 					var innerHTML = response.innerHTML;
 
-					var link;
+					var match;
 					var videoRegex = new RegExp(/youtube\.com\/watch\?v=[A-Za-z0-9]+/g);
-					while((link = videoRegex.exec(innerHTML)) !== null) {
+					while((match = videoRegex.exec(innerHTML)) !== null) {
+						var link = match[0];
 						if (!links.has(link)) {
 							links.add(link);
 							newLinks.add(link);
@@ -25,7 +26,7 @@
 
 					set(links);
 					if (newLinks.size == 0) {
-						alert('No new videos detected!');
+						chrome.tabs.sendMessage(tabId, {method: "noNewVideos"});
 					} else {
 						linkElement.value = "https://www.youtube.com/watch_videos?video_ids=" + Array.from(newLinks).join(",");
 					}
