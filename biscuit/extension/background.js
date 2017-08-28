@@ -5,13 +5,19 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		case "get":
 			var tabLinks = links[request.tabId];
 			if (tabLinks === undefined) {
-				chrome.tabs.executeScript(request.tabId, {file: 'script.js'});
-				tabLinks = [];
+				chrome.tabs.executeScript(request.tabId, {file: 'script.js'}, function() {
+					sendResponse({
+						success: true,
+						links: []
+					});
+				});
+			} else {
+				sendResponse({
+					success: true,
+					links: tabLinks
+				});
 			}
-			sendResponse({
-				success: true,
-				links: tabLinks
-			});
+			return true;
 			break;
 		case "set":
 			links[request.tabId] = request.links;
