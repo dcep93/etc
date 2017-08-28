@@ -1,5 +1,5 @@
 (function() {
-	var linkElement = document.getElementById('link');
+	var link = document.getElementById('link');
 	var tabId;
 
 	chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
@@ -10,25 +10,25 @@
 		get(function (links) {
 			chrome.tabs.sendMessage(tabId, {method: "getContent"}, null, function(response) {
 				if (response.success) {
-					var newLinks = new Set();
+					var videoIds = new Set();
 
 					var innerHTML = response.innerHTML;
 
 					var match;
-					var videoRegex = new RegExp(/youtube\.com\/watch\?v=[A-Za-z0-9]+/g);
+					var videoRegex = new RegExp(/youtube\.com\/watch\?v=([A-Za-z0-9]+)/g);
 					while((match = videoRegex.exec(innerHTML)) !== null) {
-						var link = match[0];
-						if (!links.has(link)) {
-							links.add(link);
-							newLinks.add(link);
+						var videoId = match[1];
+						if (!links.has(videoId)) {
+							links.add(videoId);
+							videoIds.add(videoId);
 						}
 					}
 
 					set(links);
-					if (newLinks.size == 0) {
+					if (videoIds.size == 0) {
 						chrome.tabs.sendMessage(tabId, {method: "noNewVideos"});
 					} else {
-						linkElement.value = "https://www.youtube.com/watch_videos?video_ids=" + Array.from(newLinks).join(",");
+						link.value = "https://www.youtube.com/watch_videos?video_ids=" + Array.from(videoIds).join(",");
 					}
 				}
 			});
@@ -43,7 +43,7 @@
 			"method": "reset",
 			"tabId": tabId
 		});
-		linkElement.value = "";
+		link.value = "";
 	}
 
 	function set(links) {
