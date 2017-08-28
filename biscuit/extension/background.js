@@ -5,6 +5,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 		case "get":
 			var tabLinks = links[request.tabId];
 			if (tabLinks === undefined) {
+				links[request.tabId] = null;
 				chrome.tabs.executeScript(request.tabId, {file: 'script.js'}, function() {
 					sendResponse({
 						success: true,
