@@ -4,8 +4,8 @@ chrome.extension.onMessage.addListener(
     		case "getContent":
     			sendResponse({success: true, innerHTML: document.body.innerHTML});
     			break;
-    		case "noNewVideos":
-    			alert('No new videos detected!');
+    		case "noVideos":
+    			alert('No videos detected!');
     			break;
     		default:
     			console.log('default', request);

@@ -1,32 +1,22 @@
-var links = {};
+(function() {
+var tabs = new Set();
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	switch (request.method) {
-		case "get":
-			var tabLinks = links[request.tabId];
-			if (tabLinks === undefined) {
-				links[request.tabId] = null;
+		case "init":
+			if (!tabs.has(request.tabId)) {
+				tabs.add(request.tabId);
 				chrome.tabs.executeScript(request.tabId, {file: 'script.js'}, function() {
 					sendResponse({
-						success: true,
-						links: []
+						success: true
 					});
 				});
 			} else {
 				sendResponse({
-					success: true,
-					links: tabLinks
+					success: true
 				});
 			}
 			return true;
-			break;
-		case "set":
-			links[request.tabId] = request.links;
-			break;
-		case "reset":
-			if (links[request.tabId] !== undefined) {
-				links[request.tabId] = [];
-			}
 			break;
 		case "log":
 			console.log(request.message);
@@ -35,3 +25,4 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 			console.log('default', request);
 	}
 });
+})();
