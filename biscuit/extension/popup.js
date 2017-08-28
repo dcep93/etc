@@ -1,6 +1,5 @@
 (function() {
 	var linkElement = document.getElementById('link');
-	var videoRegex = new RegExp(/youtube\.com\/watch\?v=[A-Za-z]+/);
 	var tabId;
 
 	chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
@@ -16,6 +15,7 @@
 					var innerHTML = response.innerHTML;
 
 					var link;
+					var videoRegex = new RegExp(/youtube\.com\/watch\?v=[A-Za-z0-9]+/g);
 					while((link = videoRegex.exec(innerHTML)) !== null) {
 						if (!links.has(link)) {
 							links.add(link);
@@ -27,7 +27,7 @@
 					if (newLinks.size == 0) {
 						alert('No new videos detected!');
 					} else {
-						linkElement.value = "https://www.youtube.com/watch_videos?video_ids=" + newLinks.join(",");
+						linkElement.value = "https://www.youtube.com/watch_videos?video_ids=" + Array.from(newLinks).join(",");
 					}
 				}
 			});
