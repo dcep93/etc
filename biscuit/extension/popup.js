@@ -1,5 +1,8 @@
 (function() {
+	var div = document.getElementById('main');
 	var link = document.getElementById('link');
+
+	link.onclick=function() { this.setSelectionRange(0, this.value.length); };
 	var tabId;
 
 	chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
@@ -10,33 +13,49 @@
 	function scrape() {
 		chrome.runtime.sendMessage({method: "init", tabId: tabId}, function(initResponse) {
 			if (initResponse.success) {
-				chrome.tabs.sendMessage(tabId, {method: "getContent"}, null, function(contentResponse) {
-					if (contentResponse.success) {
-						var videoIds = new Set();
-
-						var innerHTML = contentResponse.innerHTML;
-
-						var match;
-						var videoRegex = new RegExp(/youtube\.com\/watch\?v=([A-Za-z0-9]+)/g);
-						while((match = videoRegex.exec(innerHTML)) !== null) {
-							var videoId = match[1];
-							if (!videoIds.has(videoId)) {
-								videoIds.add(videoId);
-							}
-						}
-
-						if (videoIds.size == 0) {
-							chrome.tabs.sendMessage(tabId, {method: "noVideos"});
-						} else {
-							link.value = "https://www.youtube.com/watch_videos?video_ids=" + Array.from(videoIds).join(",");
-						}
-					}
-				});
+				getContentAndScrape();
 			}
 		});
 	}
 
-	function clipboard() { // todo
+	function getContentAndScrape() {
+		chrome.tabs.sendMessage(tabId, {method: "getContent"}, null, function(contentResponse) {
+			if (contentResponse) {
+				scrapeFromContent(contentResponse);
+			} else {
+				setTimeout(getContentAndScrape, 100);
+			}
+		});
+	}
+
+	function scrapeFromContent(contentResponse) {
+		if (contentResponse.success) {
+			var videoIds = new Set();
+
+			var innerHTML = contentResponse.innerHTML;
+
+			var match;
+			var videoRegex = new RegExp(/youtube\.com\/watch\?v=([A-Za-z0-9]+)/g);
+			while((match = videoRegex.exec(innerHTML)) !== null) {
+				var videoId = match[1];
+				if (!videoIds.has(videoId)) {
+					videoIds.add(videoId);
+				}
+			}
+
+			if (videoIds.size == 0) {
+				div.hidden = true;
+				chrome.tabs.sendMessage(tabId, {method: "noVideos"});
+			} else {
+				div.hidden = false;
+				link.value = "https://www.youtube.com/watch_videos?video_ids=" + Array.from(videoIds).join(",");
+			}
+		}
+	}
+
+	function clipboard() {
+		link.select();
+		document.execCommand('copy');
 	}
 
 	function log(message) {

@@ -12,3 +12,4 @@ chrome.extension.onMessage.addListener(
     	}
     }
 );
+
