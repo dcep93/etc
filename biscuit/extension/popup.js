@@ -35,12 +35,10 @@
 			var innerHTML = contentResponse.innerHTML;
 
 			var match;
-			var videoRegex = new RegExp(/youtube\.com\/watch\?v=([A-Za-z0-9]+)/g);
+			var videoRegex = new RegExp(/youtube\.com\/(watch\?v=|embed\/)([A-Za-z0-9]+)/g);
 			while((match = videoRegex.exec(innerHTML)) !== null) {
-				var videoId = match[1];
-				if (!videoIds.has(videoId)) {
-					videoIds.add(videoId);
-				}
+				var videoId = match[2];
+				videoIds.add(videoId);
 			}
 
 			if (videoIds.size == 0) {
