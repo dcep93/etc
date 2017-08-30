@@ -35,7 +35,7 @@
 			var innerHTML = contentResponse.innerHTML;
 
 			var match;
-			var videoRegex = new RegExp(/youtube\.com\/(watch\?v=|embed\/)([A-Za-z0-9]+)/g);
+			var videoRegex = new RegExp(/youtube\.com\/(watch\?v=|embed\/)([A-Za-z0-9\-_]+)/g);
 			while((match = videoRegex.exec(innerHTML)) !== null) {
 				var videoId = match[2];
 				videoIds.add(videoId);
