@@ -46,7 +46,6 @@
 			);
 			while ((match = videoRegex.exec(innerHTML)) !== null) {
 				var videoId = match[4];
-				console.log(match, videoId);
 				videoIds.add(videoId);
 			}
 
@@ -74,6 +73,11 @@
 		});
 	}
 
-	document.getElementById('scrape').onclick = scrape;
+	function open() {
+		window.open(link.value);
+	}
+
 	document.getElementById('clipboard').onclick = clipboard;
+	document.getElementById('scrape').onclick = scrape;
+	document.getElementById('open').onclick = open;
 })();
