@@ -12,13 +12,16 @@ var users = {};
 
 function login(code, err_callback, callback) {
 	request(
-		post {
-			grant_type: 'authorization_code',
-			code: code,
-			redirect_uri: 'http://localhost:8080',
-		}
-		auth: --user nmfEgmEz4EdcQw --password
-		'https://www.reddit.com/api/v1/access_token',
+		{
+			method: 'POST',
+			uri: 'https://www.reddit.com/api/v1/access_token',
+			form: {
+				grant_type: 'authorization_code',
+				code: code,
+				redirect_uri: 'http://localhost:8080',
+			},
+			auth: { user: nmfEgmEz4EdcQw },
+		},
 		request_helper(err_callback, function(body) {
 			get_user(body.access_token, err_callback, function(user) {
 				if (typeof users[user] === 'undefined') {
@@ -38,8 +41,11 @@ function login(code, err_callback, callback) {
 
 function get_user(access_token, err_callback, callback) {
 	request(
-		'https://oauth.reddit.com/api/v1/me',
-		{ bearer: access_token, agent: reddit_saver },
+		{
+			uri: 'https://oauth.reddit.com/api/v1/me',
+			headers: { 'User-Agent': 'reddit_saver' },
+			auth: { bearer: access_token },
+		},
 		request_helper(err_callback, function(body) {
 			callback(body.name);
 		})
@@ -53,7 +59,7 @@ function request_helper(err_callback, callback) {
 		} else {
 			callback(body);
 		}
-	}
+	};
 }
 
 function refresh(user) {
