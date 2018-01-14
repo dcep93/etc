@@ -3,5 +3,5 @@
 // curl -H "Authorization: bearer b5CeFPXaY_UTQ0MWaCbMkGh0PJs" -A 'reddit_saver' https://oauth.reddit.com/api/v1/me
 
 module.exports = function(host) {
-	throw new Error('instructions not implemented');
+	return 'curl -X POST -H "Content-Type: application/json" -d "{\\"code\\": \\"$CODE\\"}" localhost:3000';
 };

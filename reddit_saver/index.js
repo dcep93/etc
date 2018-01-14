@@ -8,7 +8,7 @@ var app = express();
 app.use(bodyParser.json());
 
 app.get('/', function(req, res) {
-	res.send(instructions(req.get('host')));
+	res.send(instructions(req.get('host')) + '\n');
 });
 
 app.post('/', function(req, res) {
