@@ -12,12 +12,13 @@ app.get('/', function(req, res) {
 });
 
 app.post('/', function(req, res) {
-	var err = register(req.body);
-	if (err === null) {
-		res.sendStatus(200);
-	} else {
-		res.status(400).send(err);
-	}
+	register(req.body, function(err) {
+		if (err === null) {
+			res.sendStatus(200);
+		} else {
+			res.status(400).send(err);
+		}
+	});
 });
 
 app.use(function(err, req, res, next) {

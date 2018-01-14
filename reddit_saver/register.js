@@ -1,19 +1,32 @@
 var data = require('./data');
 var api = require('./api');
 
-function get_children(children_args) {
-	var children = [];
-	for (var child of children_args) {
-		response = api.login(child.code);
-		if (response.err !== null) {
-			return response;
-		}
-		children.push({ user: response.user, nsfw: child.nsfw });
-	}
-	return { children: children };
+function get_children(children_args, err_callback, callback) {
+	get_children_helper(children_args, err_callback, callback, []);
 }
 
-function register(args) {
+function get_children_helper(
+	children_args,
+	err_callback,
+	callback,
+	already_pulled_children
+) {
+	if (children_args.length === 0) {
+		callback(already_pulled_children);
+	}
+
+	var child_obj = children_args[0];
+	api.login(child_obj.code, err_callback, function(login_obj) {
+		already_pulled_children.push({ user: login_obj, nsfw: child_obj.nsfw });
+		get_children_helper(
+			children_args.slice(1),
+			callback,
+			already_pulled_children
+		);
+	});
+}
+
+function register(args, callback) {
 	// {
 	// 	code: string
 	// 	children: array[{
@@ -22,20 +35,12 @@ function register(args) {
 	// 	}]
 	// }
 
-	var response = api.login(args.code);
-	if (response.err !== null) {
-		return response.err;
-	}
-	var user = response.user;
-
-	var children_obj = get_children(args.children);
-	if (children_obj.err !== null) {
-		return children_obj.err;
-	}
-
-	data.init(user, children);
-
-	return null;
+	api.login(args.code, callback, function(user) {
+		get_children(args.children, callback, function(children) {
+			data.init(user, children);
+			callback(null);
+		});
+	});
 }
 
 module.exports = register;
