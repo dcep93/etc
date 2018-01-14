@@ -17,6 +17,7 @@ var api = require('./api');
 var data = {};
 
 function execute() {
+	console.log('execute');
 	for (var access_token in data) {
 		var o = data[access_token];
 		var liked = api.get_liked(o.user);
