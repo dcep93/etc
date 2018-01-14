@@ -16,7 +16,7 @@ app.post('/', function(req, res) {
 		if (err === null) {
 			res.sendStatus(200);
 		} else {
-			res.status(400).send(err);
+			res.status(400).send(err.message + '\n');
 		}
 	});
 });

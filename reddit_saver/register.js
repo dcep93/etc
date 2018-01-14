@@ -13,6 +13,7 @@ function get_children_helper(
 ) {
 	if (children_args.length === 0) {
 		callback(already_pulled_children);
+		return;
 	}
 
 	var child_obj = children_args[0];
@@ -35,8 +36,13 @@ function register(args, callback) {
 	// 	}]
 	// }
 
+	if (typeof args.code === 'undefined') {
+		callback(new Error('code not specified'));
+		return;
+	}
+
 	api.login(args.code, callback, function(user) {
-		get_children(args.children, callback, function(children) {
+		get_children(args.children || [], callback, function(children) {
 			data.init(user, children);
 			callback(null);
 		});

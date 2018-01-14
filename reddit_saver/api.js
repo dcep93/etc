@@ -1,5 +1,7 @@
 var refresh_period = 1000 * 60 * 50; // 50 min
 
+var client_id = 'nmfEgmEz4EdcQw';
+
 var request = require('request');
 
 // {
@@ -20,7 +22,7 @@ function login(code, err_callback, callback) {
 				code: code,
 				redirect_uri: 'http://localhost:8080',
 			},
-			auth: { user: nmfEgmEz4EdcQw },
+			auth: { user: client_id },
 		},
 		request_helper(err_callback, function(body) {
 			get_user(body.access_token, err_callback, function(user) {
@@ -30,8 +32,8 @@ function login(code, err_callback, callback) {
 						refresh_token: body.refresh_token,
 					};
 					setInterval(function() {
-						refresh(user), refresh_period;
-					});
+						refresh(user);
+					}, refresh_period);
 				}
 				callback(user);
 			});
@@ -53,11 +55,16 @@ function get_user(access_token, err_callback, callback) {
 }
 
 function request_helper(err_callback, callback) {
-	return function(err, res, body) {
+	return function(err, res, body_string) {
 		if (err !== null) {
 			err_callback(err);
 		} else {
-			callback(body);
+			var body = JSON.parse(body_string);
+			if (typeof body.error !== 'undefined') {
+				err_callback(new Error(body.error));
+			} else {
+				callback(body);
+			}
 		}
 	};
 }
