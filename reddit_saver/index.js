@@ -1,19 +1,19 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
+var instructions = require('./instructions');
 var register = require('./register');
 
 var app = express();
 app.use(bodyParser.json());
 
 app.get('/', function(req, res) {
-	res.send('https://' + req.get('host') + '\n');
+	res.send(instructions(req.get('host')));
 });
 
 app.post('/', function(req, res) {
-	console.log('dan');
 	var err = register(req.body);
-	if (err == null) {
+	if (err === null) {
 		res.sendStatus(200);
 	} else {
 		res.status(400).send(err);
