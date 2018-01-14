@@ -3,13 +3,12 @@ var execute_period = 1000 * 60 * 30; // 30 min
 var api = require('./api');
 
 // {
-// 	access_token string: {
-// 		user: user,
+// 	user string: {
 // 		saved: set[post_id int]
 // 		children: array[
 // 			{
-// 				access_token: child_access_token string,
-// 				nsfw: nsfw bool
+// 				user: string,
+// 				nsfw: bool
 // 			}
 // 		]
 // 	}
@@ -18,14 +17,14 @@ var data = {};
 
 function execute() {
 	console.log('execute');
-	for (var access_token in data) {
-		var o = data[access_token];
-		var liked = api.get_liked(o.user);
-		save(o.user, o.saved, liked, true);
+	for (var user in data) {
+		var o = data[user];
+		var liked = api.get_liked(user);
+		save(user, o.saved, liked, true);
 		var children = o.children;
 		o.children.forEach(function(child) {
-			var c = data[child.access_token];
-			save(c.user, c.saved, liked, child.nsfw);
+			var c = data[child.user];
+			save(child.user, c.saved, liked, child.nsfw);
 		});
 	}
 }
@@ -53,27 +52,13 @@ function unsave(user, saved, liked) {
 
 setInterval(execute, execute_period);
 
-function exists(access_token) {
-	return typeof data[access_token] !== 'undefined';
-}
-
-function set(access_token, user) {
-	data[access_token] = {
-		user: user,
+function init(user, children) {
+	data[user] = {
 		saved: new Set([]),
-		children: [],
+		children: children,
 	};
 }
 
-function add_child(parent_access_token, access_token, nsfw) {
-	data[parent_access_token].children.push({
-		access_token: access_token,
-		nsfw: nsfw,
-	});
-}
-
 module.exports = {
-	exists: exists,
-	set: set,
-	add_child: add_child,
+	init: init,
 };

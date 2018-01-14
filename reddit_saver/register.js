@@ -1,58 +1,39 @@
 var data = require('./data');
 var api = require('./api');
 
-function login(access_token, refresh_token) {
-	var response = api.login(access_token, refresh_token);
-	if (response.err !== null) {
-		return response.err;
-	}
-	data.set(access_token, response.user);
-	return null;
-}
-
-function handle(access_token, refresh_token, parent_access_token, nsfw) {
-	if (!data.exists(access_token)) {
-		var err = login(access_token, refresh_token);
-		if (err !== null) {
-			return err;
+function get_children(children_args) {
+	var children = [];
+	for (var child of children_args) {
+		response = api.login(child.code);
+		if (response.err !== null) {
+			return response;
 		}
+		children.push({ user: response.user, nsfw: child.nsfw });
 	}
-
-	if (parent_access_token !== null) {
-		data.add_child(parent_access_token, access_token, nsfw);
-	}
-	return null;
+	return { children: children };
 }
 
 function register(args) {
 	// {
-	// 	access_token: string
-	// 	refresh_token: string
-	// 	parallel: array[{
-	// 		access_token: string
-	// 		refresh_token: string
+	// 	code: string
+	// 	children: array[{
+	//      code: string
 	// 		nsfw: bool
 	// 	}]
 	// }
 
-	var err = handle(args.access_token, args.refresh_token);
+	var response = api.login(args.code);
+	if (response.err !== null) {
+		return response.err;
+	}
+	var user = response.user;
 
-	if (err !== null) {
-		return err;
+	var children_obj = get_children(args.children);
+	if (children_obj.err !== null) {
+		return children_obj.err;
 	}
 
-	for (var parallel of args.parallel) {
-		err = handle(
-			parallel.access_token,
-			parallel.refresh_token,
-			args.access_token,
-			parallel.nsfw
-		);
-
-		if (err !== null) {
-			return err;
-		}
-	}
+	data.init(user, children);
 
 	return null;
 }

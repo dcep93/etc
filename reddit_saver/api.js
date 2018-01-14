@@ -1,4 +1,12 @@
-function login(access_token, refresh_token) {
+// {
+// 	user string: {
+// 		access_token: string
+//      refresh_token: string
+// 	}
+// }
+var users = {};
+
+function login(code) {
 	throw new Error('login not implemented');
 }
 
