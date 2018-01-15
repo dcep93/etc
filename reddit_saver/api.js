@@ -12,8 +12,12 @@ var request = require('request');
 // }
 var users = {};
 
+// {
+// 	post_id string: nsfw bool
+// }
+var posts = {};
+
 function login(code, err_callback, callback) {
-	console.log('logging in with', code);
 	request(
 		{
 			method: 'POST',
@@ -35,8 +39,6 @@ function login(code, err_callback, callback) {
 					setInterval(function() {
 						refresh(user);
 					}, refresh_period);
-				} else {
-					console.log(user, 'already logged in');
 				}
 				callback(user);
 			});
@@ -51,13 +53,15 @@ function get_user(access_token, err_callback, callback) {
 			headers: { 'User-Agent': 'reddit_saver' },
 			auth: { bearer: access_token },
 		},
-		request_helper(err_callback, function(body) {
+		request_helper(null, function(body) {
 			callback(body.name);
 		})
 	);
 }
 
 function request_helper(err_callback, callback) {
+	if (!err_callback) err_callback = console.log;
+	if (!callback) callback = function() {};
 	return function(err, res, body_string) {
 		if (err !== null) {
 			err_callback(err);
@@ -73,27 +77,88 @@ function request_helper(err_callback, callback) {
 }
 
 function refresh(user) {
-	throw new Error('refresh not implemented');
+	request(
+		{
+			method: 'POST',
+			uri: 'https://www.reddit.com/api/v1/access_token',
+			auth: { user: client_id },
+
+			form: {
+				grant_type: 'refresh_token',
+				refresh_token: users[user].refresh_token,
+			},
+		},
+		request_helper(null, function(body) {
+			users[user].access_token = body.access_token;
+		})
+	);
 }
 
-function is_NSFW(post_id, callback) {
-	throw new Error('is_NSFW not implemented');
+function is_NSFW(post_id) {
+	return posts[post_id];
 }
 
 function get_liked(user, callback) {
-	throw new Error('get_liked not implemented');
+	get_liked_helper(user, null, new Set(), callback);
+}
+
+function get_liked_helper(user, after, liked, callback) {
+	request(
+		{
+			uri:
+				'https://oauth.reddit.com/user/' +
+				user +
+				'/upvoted?after=' +
+				after,
+			headers: { 'User-Agent': 'reddit_saver' },
+			auth: { bearer: users[user].access_token },
+		},
+		request_helper(null, function(body) {
+			body.data.children.forEach(function(child) {
+				var id = child.data.name;
+				posts[id] = child.data.over_18;
+				liked.add(id);
+			});
+			if (body.data.after) {
+				get_liked_helper(user, body.data.after, liked, callback);
+			} else {
+				callback(liked);
+			}
+		})
+	);
 }
 
 function save(user, post_id) {
-	save_helper(user, post_id, true);
+	request(
+		{
+			method: 'POST',
+			uri: 'https://oauth.reddit.com/api/save',
+			headers: { 'User-Agent': 'reddit_saver' },
+			auth: { bearer: users[user].access_token },
+
+			form: {
+				category: 'reddit_saver',
+				id: post_id,
+			},
+		},
+		request_helper()
+	);
 }
 
 function unsave(user, post_id) {
-	save_helper(user, post_id, false);
-}
+	request(
+		{
+			method: 'POST',
+			uri: 'https://oauth.reddit.com/api/unsave',
+			headers: { 'User-Agent': 'reddit_saver' },
+			auth: { bearer: users[user].access_token },
 
-function save_helper(user, post_id, to_save) {
-	throw new Error('save_helper not implemented');
+			form: {
+				id: post_id,
+			},
+		},
+		request_helper()
+	);
 }
 
 module.exports = {

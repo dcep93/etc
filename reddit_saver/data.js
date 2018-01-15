@@ -4,7 +4,7 @@ var api = require('./api');
 
 // {
 // 	user string: {
-// 		saved: set[post_id int]
+// 		saved: set[post_id string]
 // 		children: array[
 // 			{
 // 				user: string,
@@ -19,12 +19,13 @@ function execute() {
 	console.log('execute');
 	for (var user in data) {
 		var o = data[user];
-		var liked = api.get_liked(user);
-		save(user, o.saved, liked, true);
-		var children = o.children;
-		o.children.forEach(function(child) {
-			var c = data[child.user];
-			save(child.user, c.saved, liked, child.nsfw);
+		api.get_liked(user, function(liked) {
+			save(user, o.saved, liked, true);
+			var children = o.children;
+			o.children.forEach(function(child) {
+				var c = data[child.user];
+				save(child.user, c.saved, liked, child.nsfw);
+			});
 		});
 	}
 }
@@ -45,8 +46,8 @@ function unsave(user, saved, liked) {
 	saved.forEach(function(post_id) {
 		if (!liked.has(post_id)) {
 			api.unsave(user, post_id);
+			saved.delete(post_id);
 		}
-		saved.delete(post_id);
 	});
 }
 
