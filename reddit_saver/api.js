@@ -13,6 +13,7 @@ var request = require('request');
 var users = {};
 
 function login(code, err_callback, callback) {
+	console.log('logging in with', code);
 	request(
 		{
 			method: 'POST',
@@ -34,6 +35,8 @@ function login(code, err_callback, callback) {
 					setInterval(function() {
 						refresh(user);
 					}, refresh_period);
+				} else {
+					console.log(user, 'already logged in');
 				}
 				callback(user);
 			});

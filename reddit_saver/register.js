@@ -21,6 +21,7 @@ function get_children_helper(
 		already_pulled_children.push({ user: login_obj, nsfw: child_obj.nsfw });
 		get_children_helper(
 			children_args.slice(1),
+			err_callback,
 			callback,
 			already_pulled_children
 		);
