@@ -58,6 +58,9 @@ function init(user, children) {
 		saved: new Set([]),
 		children: children,
 	};
+	children.forEach(function(child) {
+		init(child.user, []);
+	});
 }
 
 module.exports = {
