@@ -1,8 +1,7 @@
 var refresh_period = 1000 * 60 * 50; // 50 min
 
-var client_id = 'nmfEgmEz4EdcQw';
-
 var request = require('request');
+var client_id = require('./config').client_id;
 
 // {
 // 	user string: {

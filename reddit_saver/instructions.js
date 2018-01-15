@@ -1,4 +1,4 @@
-var client_id = 'nmfEgmEz4EdcQw';
+var client_id = require('./config').client_id;
 
 var instructions = `
 

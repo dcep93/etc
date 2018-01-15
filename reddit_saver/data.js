@@ -18,16 +18,19 @@ var data = {};
 function execute() {
 	console.log('execute');
 	for (var user in data) {
-		var o = data[user];
-		api.get_liked(user, function(liked) {
-			save(user, o.saved, liked, true);
-			var children = o.children;
-			o.children.forEach(function(child) {
-				var c = data[child.user];
-				save(child.user, c.saved, liked, child.nsfw);
-			});
-		});
+		handle(user);
 	}
+}
+
+function handle(user) {
+	var o = data[user];
+	api.get_liked(user, function(liked) {
+		save(user, o.saved, liked, true);
+		o.children.forEach(function(child) {
+			var c = data[child.user];
+			save(child.user, c.saved, liked, child.nsfw);
+		});
+	});
 }
 
 function save(user, saved, liked, nsfw) {
