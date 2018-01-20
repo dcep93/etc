@@ -1,11 +1,15 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
+var config = require('./config');
 var instructions = require('./instructions');
 var register = require('./register');
+var keep_alive = require('./keep_alive');
 
 var app = express();
 app.use(bodyParser.json());
+
+app.use('/', keep_alive);
 
 app.get('/', function(req, res) {
 	res.send(instructions(req.get('host')) + '\n');
@@ -30,8 +34,6 @@ app.use(function(req, res, next) {
 	res.sendStatus(404);
 });
 
-var port = process.env.PORT || 3000;
-
-app.listen(port, function() {
-	console.log('listening on port ' + port);
+app.listen(config.port, function() {
+	console.log('listening on port ' + config.port);
 });
