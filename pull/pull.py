@@ -14,49 +14,48 @@ def main():
 #	cookieTxt = sys.argv[3] if len(sys.argv) > 3 else ""
 	cookieTxt = ""
 
-	matchURL = "/".join(startURL.split("/")[:-1])
-	if len(sys.argv) > 2 and sys.argv[2] == "-":
-		s = matchURL.split("//")
-		matchURL = s[0] + "//" + s[1].split("/")[0]
+	options['matchURL'] = "/".join(options['startURL'].split("/")[:-1])
+	options['protocol'] = options['startURL'].split('//')[0]
 
+	global opener
 	opener = urllib2.build_opener()
 	if os.path.isfile(cookieTxt):
 		cj = cookielib.MozillaCookieJar(cookieTxt)
 		cj.load(cookieTxt, ignore_discard=True, ignore_expires=True)
 		opener.add_handler(urllib2.HTTPCookieProcessor(cj))
 
-	pull(options['startURL'], matchURL, depth, opener, extensions)
-	savePages(startURL, extensions)
+	pull(options['startURL'], options['depth'])
+	savePages()
 	print "success!"
 
-def pull(startURL, matchURL, depth, args):
+def pull(startURL, depth):
 	if depth == 0: return
-	page = getPage(startURL, depth, options)
+	page = getPage(startURL, depth)
 	pulledPages[urlToPulledPage(startURL, None)] = page
 	if page is None: return
-	downloadDependencies(page, opener, matchURL, startURL, extensions)
+	downloadDependencies(page, startURL)
 	nextRound = []
 	for link in page.findAll("a", href=True):
 		linkUrl = link["href"].split("?")[0].split("#")[0]
 		pulledPage = urlToPulledPage(linkUrl, startURL)
-		if pulledPage.startswith(matchURL) and pulledPage not in pulledPages and '@' not in pulledPage:
+		if pulledPage.startswith(options['matchURL']) and pulledPage not in pulledPages and '@' not in pulledPage:
 			pulledPages[pulledPage] = None
 			nextRound.append(pulledPage)
 	for url in nextRound:
-		pull(url, matchURL, depth-1, args)
+		pull(url, depth-1)
 
 def urlToPulledPage(url, startURL):
 	if url.startswith('//'):
-		url = 'http:' + url
-	if url.startswith('/'):
-		url = startURL + '/' + url
+		url = options['protocol'] + url
+	elif url.startswith('/'):
+		url = startURL + url
 	return url.strip("/")
 
-def savePages(matchURL, extensions):
+def savePages():
 	for url, page in pulledPages.items():
 		if page is not None:
-			updateLinks(page, matchURL, url, extensions)
-			save(url, page.prettify(), matchURL, extensions)
+			updateLinks(page, url)
+			save(url, page.prettify())
 
 def memoize(f):
 	d = {}
@@ -67,8 +66,8 @@ def memoize(f):
 	return g
 
 @memoize
-def save(url, text, matchURL, extensions):
-	path = urlToPath(url, matchURL, extensions)
+def save(url, text):
+	path = urlToPath(url)
 	savePath = "html/" + path
 	folder = os.path.dirname(savePath)
 	if not os.path.exists(folder):
@@ -81,65 +80,64 @@ def save(url, text, matchURL, extensions):
 		raise
 	return path
 
-def urlToPath(url, matchURL, extensions):
-	path = url[len(matchURL):]
+def urlToPath(url):
+	path = url[len(options['matchURL']):]
 	if path.endswith("/"):
 		path = path[:-1]
-	if defaultPath(path, extensions):
-		path += "/index.html"
-	return "." + path
+	if defaultPath(path):
+		path = path.strip('/') + "/index.html"
+	return path
 
-def defaultPath(path, extensions):
-	for extension in [".js", ".html", ".css"] + extensions:
+def defaultPath(path): # TODO
+	for extension in [".js", ".html", ".css"] + options['extensions']:
 		if path.endswith(extension):
 			return False
 	return True
 
-def updateLinks(page, matchURL, url, extensions):
+def updateLinks(page, url):
 	for anchor in page.findAll("a", href=True):
 		if urlToPulledPage(anchor["href"], url) in pulledPages:
-			anchor["href"] = relativePath(anchor["href"], matchURL, url, extensions)
+			anchor["href"] = relativePath(anchor["href"], url)
 
-def relativePath(childUrl, matchURL, parentURL, extensions):
-	path = urlToPath(parentURL, matchURL, extensions)
+def relativePath(childUrl, parentURL):
+	path = urlToPath(parentURL)
 	count = path.replace('./', '').count('/')-1
 	parentDirs = "../" * count
-	rP = parentDirs + urlToPath(childUrl, matchURL, extensions)
+	rP = parentDirs + urlToPath(childUrl)
 	return rP
 
-def getPage(url, depth, args):
-	print "  " * (args['maxdepth'] - depth) + url
-	html = read(url, args)
+def getPage(url, depth):
+	print "\t" * (options['depth'] - depth) + url
+	html = read(url)
 	if html is None: return
 	page = BeautifulSoup(html, "lxml")
 	return page
 
-def downloadDependencies(page, opener, matchURL, url, extensions):
+def downloadDependencies(page, url):
 	for js in page.findAll("script", src=True):
-		if js['src'].startswith("//"):
-			js['src'] = "http:" + js['src']
-		js['src'] = downloadDependency(js['src'], opener, matchURL, url, extensions)
+		js['src'] = downloadDependency(js['src'], url)
 	for css in page.findAll("link", rel="stylesheet"):
-		if css['href'].startswith("//"):
-			css['href'] = "http:" + css['href']
-		css['href'] = downloadDependency(css['href'], opener, matchURL, url, extensions)
+		css['href'] = downloadDependency(css['href'], url)
 
-def downloadDependency(url, opener, matchURL, parentURL, extensions):
+def downloadDependency(url, parentURL):
+	if url.startswith("//"):
+		url = options['protocol'] + url
 	if url.startswith("/"):
 		s = parentURL.split("//")
 		fetchURL = s[0] + "//" + s[1].split("/")[0] + url
-		saveURL = "/".join(parentURL.split("/")[:-1]) + url
+	elif '//' in url:
+		fetchURL = url
 	else:
-		fetchURL = saveURL = url
-	if not saveURL.startswith(matchURL):
-		return fetchURL
-	text = read(fetchURL, opener)
+		fetchURL = parentURL + '/' + url
+	saveURL = "/".join(parentURL.split("/")[:-1]) + url
+	if not fetchURL.startswith(options['matchURL']): return fetchURL
+	text = read(fetchURL)
 	if text is None: return
-	path = save(saveURL, text, matchURL, extensions)
-	rP = relativePath(saveURL, matchURL, parentURL, extensions)
+	path = save(fetchURL, text)
+	rP = relativePath(saveURL, parentURL)
 	return rP
 
-def read(url, opener):
+def read(url):
 	try:
 		return opener.open(url).read()
 	except urllib2.HTTPError as e:
