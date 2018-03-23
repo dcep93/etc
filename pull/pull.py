@@ -9,7 +9,7 @@ options = {}
 
 def main():
 	options['startURL'] = sys.argv[1]
-	options['depth'] = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+	options['depth'] = int(sys.argv[2]) if len(sys.argv) > 2 else -1
 	options['extensions'] = sys.argv[2:]
 #	cookieTxt = sys.argv[3] if len(sys.argv) > 3 else ""
 	cookieTxt = ""
