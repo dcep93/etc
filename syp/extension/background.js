@@ -1,4 +1,6 @@
 (function() {
+console.log('background');
+
 var tabs = new Set();
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -11,14 +13,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 						success: true
 					});
 				});
-				return;
+				return true;
 			}
 			break;
-		case "log":
-			console.log(request.message);
-			break;
 		default:
-			console.log('default', request);
+			console.log(request);
 	}
 	
 	sendResponse({

@@ -10,7 +10,8 @@
   },
   "permissions": [
     "activeTab",
-    "background"
+    "background",
+    "https://www.youtube.com/"
   ],
   "background": {
     "scripts": ["background.js"]

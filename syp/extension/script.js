@@ -1,3 +1,5 @@
+console.log('script');
+
 chrome.extension.onMessage.addListener(
     function(request, sender, sendResponse) {
     	switch (request.method) {
@@ -8,7 +10,7 @@ chrome.extension.onMessage.addListener(
     			alert(request.alert);
     			break;
     		default:
-    			console.log('default', request);
+    			console.log(request);
     	}
     }
 );
