@@ -113,26 +113,26 @@
 			var uri = encodeURIComponent(raw);
 			ajax("GET", 'https://www.youtube.com/results?search_query='+uri, function(xhr) {
 				assign(--remaining);
+				console.log(xhr);
 				videoIds[index] = getVideoIdFromYoutube(xhr.responseText);
 				if (remaining === 0) {
 					callback(videoIds);
 				}
 			});
-			return songQuery;
 		});
 	}
 
 	function getVideoIdFromYoutube(text) {
+		chrome.tabs.sendMessage(tabId, text);
 		return 'todo';
 	}
 
 	function assign(n) {
 		if (n === 0) {
-
+			chrome.browserAction.setBadgeText({text: ""});
 		} else {
-
+			chrome.browserAction.setBadgeText({text: n.toString()});
 		}
-		chrome.tabs.sendMessage(tabId, n);
 	}
 
 	document.getElementById('clipboard').onclick = clipboard;
