@@ -101,17 +101,20 @@
 
 	function getVideoIdsFromSpotify(songs, callback) {
 		var videoIds = [];
-		var remaining = 0;
+		var remaining = songs.size;
+		assign(remaining);
+		var div = document.createElement('div');
 		Array.from(songs).forEach(function(song, index) {
 			var songName = song.match(/<span class="tracklist-name">(.+?)<\/span>/)[1];
 			var artist = regexFindAll(song, /"\/artist\/\w+">(.+?)<\/a>/g, 1).join(', ');
 			var album = song.match(/"\/album\/\w+">(.+?)<\/a>/)[1];
-			var songQuery = songName + " " + artist + " " + album;
-			assign(++remaining);
-			ajax("GET", 'https://www.youtube.com', function(xhr) {
+			div.innerHTML = songName + " " + artist + " " + album;
+			var raw = div.innerText;
+			var uri = encodeURIComponent(raw);
+			ajax("GET", 'https://www.youtube.com/results?search_query='+uri, function(xhr) {
 				assign(--remaining);
 				videoIds[index] = getVideoIdFromYoutube(xhr.responseText);
-				if (!remaining) {
+				if (remaining === 0) {
 					callback(videoIds);
 				}
 			});
@@ -127,7 +130,7 @@
 		if (n === 0) {
 
 		} else {
-			
+
 		}
 		chrome.tabs.sendMessage(tabId, n);
 	}
