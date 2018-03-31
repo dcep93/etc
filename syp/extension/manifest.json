@@ -6,6 +6,7 @@
   "version": "0.1.0",
 
   "browser_action": {
+    "default_icon": "s_full.png",
     "default_popup": "popup.html"
   },
   "permissions": [
@@ -13,6 +14,11 @@
     "background",
     "https://www.youtube.com/"
   ],
+  "icons": {
+    "16": "s_full.png",
+    "48": "s_full.png",
+    "128": "s_full.png"
+  },
   "background": {
     "scripts": ["background.js"]
   }
