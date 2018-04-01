@@ -1,4 +1,8 @@
 (function() {
+	// search results
+	// rate limit
+	// works for album
+
 	console.log('popup');
 
 	var link = document.getElementById('link');
@@ -56,54 +60,70 @@
 			var regex = new RegExp(
 				/<div class="track-name-wrapper ellipsis-one-line tracklist-top-align">(.*?)<\/div>/g
 			);
-			var songs = new Set(regexFindAll(innerHTML, regex, 1));
+			var songs = regexFindAll(innerHTML, regex, 1);
 
-			if (songs.size == 0) {
+			if (songs.length == 0) {
 				chrome.tabs.sendMessage(tabId, { method: 'alert', alert: 'No Spotify songs found'});
 			} else {
-				getVideoIdsFromSpotify(songs, function(videoIds) {
-					videoIds = videoIds.filter(Boolean);
-					if (videoIds.length === 0) {
-						chrome.tabs.sendMessage(tabId, { method: 'alert', alert: 'Could not find youtube videos'});
-					} else {
-						link.value =
-							'https://www.youtube.com/watch_videos?video_ids=' +
-							videoIds.join(',');	
-					}
-				});
+				getVideoIdsFromSpotify(songs);
 			}
 		} else {
 			chrome.tabs.sendMessage(tabId, 'scrapeFromContent');
 		}
 	}
 
-	function getVideoIdsFromSpotify(songs, callback) {
+	function getVideoIdsFromSpotify(songs) {
 		var videoIds = [];
-		var remaining = songs.size;
+		var remaining = songs.length;
 		assign(remaining);
 		var div = document.createElement('div');
-		Array.from(songs).forEach(function(song, index) {
-			var songName = song.match(/<span class="tracklist-name">(.+?)<\/span>/)[1];
-			var artist = regexFindAll(song, /"\/artist\/\w+">(.+?)<\/a>/g, 1).join(', ');
-			var album = song.match(/"\/album\/\w+">(.+?)<\/a>/)[1];
-			div.innerHTML = songName + " " + artist + " " + album;
+		songs.forEach(function(song, index) {
+			try {
+				var matches = song.match(/<span class="tracklist-name">(.+?)<\/span><span class="artists-album ellipsis-one-line"><span>(.*)<span class="artists-album-separator" aria-label="in album">.<\/span>(.*)<\/span>/);
+				var songName = matches[1];
+				var artistSpans = matches[2];
+				var albumSpan = matches[3];
+
+				var artist = regexFindAll(artistSpans, /"\/artist\/\w+">(.+?)<\/a>/g, 1).join(', ');
+				var album = albumSpan.match(/^.*>(.+?)<.*$/)[1];
+
+				div.innerHTML = songName + " " + artist + " " + album;
+
+				var query = div.innerHTML;
+			} catch (e) {
+				chrome.tabs.sendMessage(tabId, song);
+				chrome.tabs.sendMessage(tabId, e.message);
+				display(videoIds, --remaining);
+				return;
+			}
 			var raw = div.innerText;
 			var uri = encodeURIComponent(raw);
 			ajax("GET", 'https://www.youtube.com/results?sp=EgIQAQ%253D%253D&search_query='+uri, function(xhr) {
-				assign(--remaining);
-				videoIds[index] = getVideoIdFromYoutube(xhr.responseText, div.innerHTML);
-				if (remaining === 0) {
-					callback(videoIds);
-				}
+				videoIds[index] = getVideoIdFromYoutube(xhr.responseText, query);
+				display(videoIds, --remaining);
 			});
 		});
+	}
+
+	function display(videoIds, remaining) {
+		if (!assign(remaining)) return;
+		videoIds = videoIds.filter(Boolean);
+		if (videoIds.length === 0) {
+			chrome.tabs.sendMessage(tabId, { method: 'alert', alert: 'Could not find youtube videos'});
+		} else {
+			link.value =
+				'https://www.youtube.com/watch_videos?video_ids=' +
+				videoIds.join(',');
+		}
 	}
 
 	function assign(n) {
 		if (n === 0) {
 			chrome.browserAction.setBadgeText({text: ""});
+			return true;
 		} else {
 			chrome.browserAction.setBadgeText({text: n.toString()});
+			return false;
 		}
 	}
 
@@ -113,7 +133,8 @@
 			chrome.tabs.sendMessage(tabId, 'no videos found for ' + query + '!');
 			return null;
 		}
-		var results = JSON.parse(resultsMatch[1]).contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents[0].itemSectionRenderer.contents;
+		var parsed = JSON.parse(resultsMatch[1])
+		var results = parsed.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents[0].itemSectionRenderer.contents;
 		var highScore = -1;
 		var videoId;
 		results.forEach(function(result) {
@@ -127,7 +148,7 @@
 		return videoId;
 	}
 
-	function getScore(result) {
+	function getScore(result) { // todo
 		return 0;
 	}
 

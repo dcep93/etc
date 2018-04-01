@@ -3,7 +3,7 @@
 
   "name": "SYP",
   "description": "This extension grabs songs from a spotify playlist and provides a youtube link containing music videos for each song.",
-  "version": "0.1.0",
+  "version": "0.1.1",
 
   "browser_action": {
     "default_icon": "s_full.png",
