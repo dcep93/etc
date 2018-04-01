@@ -1,5 +1,5 @@
 (function() {
-	// search results
+	// sort search results
 	// rate limit
 	// works for album
 
