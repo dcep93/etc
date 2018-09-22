@@ -1,7 +1,10 @@
 var refresh_period = 1000 * 60 * 50; // 50 min
 
 var request = require('request');
-var client_id = require('./config').client_id;
+var config = require('./config');
+
+var client_id = config.client_id;
+var redirect_uri = 'http://localhost:' + config.port;
 
 // {
 // 	user string: {

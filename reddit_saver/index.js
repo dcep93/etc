@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
+var config = require('./config');
 var instructions = require('./instructions');
 var register = require('./register');
 
@@ -36,8 +37,6 @@ app.use(function(req, res, next) {
 	res.sendStatus(404);
 });
 
-var port = process.env.PORT || 3000;
-
-app.listen(port, function() {
-	console.log('listening on port ' + port);
+app.listen(config.port, function() {
+	console.log('listening on port ' + config.port);
 });
