@@ -13,10 +13,12 @@
 			this.setSelectionRange(0, this.value.length);
 		};
 
-		chrome.tabs.query({ currentWindow: true, active: true }, function(tabs) {
+		chrome.tabs.query({ currentWindow: true, active: true }, function(
+			tabs
+		) {
 			tabId = tabs[0].id;
 			scrape();
-		});	
+		});
 	}
 
 	function scrape() {
@@ -63,7 +65,10 @@
 			var songs = regexFindAll(innerHTML, regex, 1);
 
 			if (songs.length == 0) {
-				chrome.tabs.sendMessage(tabId, { method: 'alert', alert: 'No Spotify songs found'});
+				chrome.tabs.sendMessage(tabId, {
+					method: 'alert',
+					alert: 'No Spotify songs found',
+				});
 			} else {
 				getVideoIdsFromSpotify(songs);
 			}
@@ -79,29 +84,42 @@
 		var div = document.createElement('div');
 		songs.forEach(function(song, index) {
 			try {
-				var matches = song.match(/<span class="tracklist-name">(.+?)<\/span><span class="artists-album ellipsis-one-line"><span>(.*)<span class="artists-album-separator" aria-label="in album">.<\/span>(.*)<\/span>/);
+				var matches = song.match(
+					/<span class="tracklist-name">(.+?)<\/span>.*?<span class="second-line ellipsis-one-line"><span.*?>(.*).*?<span class="second-line-separator" aria-label="in album">.*?<a .*?href="\/album\/\w+?">(.+?)<\/a>/
+				);
 				var songName = matches[1];
 				var artistSpans = matches[2];
-				var albumSpan = matches[3];
+				var album = matches[3];
 
-				var artist = regexFindAll(artistSpans, /"\/artist\/\w+">(.+?)<\/a>/g, 1).join(', ');
-				var album = albumSpan.match(/^.*>(.+?)<.*$/)[1];
+				var artist = regexFindAll(
+					artistSpans,
+					/<a .*?href="\/artist\/w+?">(.+?)<\/a>/g,
+					1
+				).join(', ');
 
-				div.innerHTML = songName + " " + artist + " " + album;
+				div.innerHTML = songName + ' ' + artist + ' ' + album;
 
 				var query = div.innerHTML;
 			} catch (e) {
 				chrome.tabs.sendMessage(tabId, song);
-				chrome.tabs.sendMessage(tabId, e.message);
+				chrome.tabs.sendMessage(tabId, e.stack);
 				display(videoIds, --remaining);
 				return;
 			}
 			var raw = div.innerText;
 			var uri = encodeURIComponent(raw);
-			ajax("GET", 'https://www.youtube.com/results?sp=EgIQAQ%253D%253D&search_query='+uri, function(xhr) {
-				videoIds[index] = getVideoIdFromYoutube(xhr.responseText, query);
-				display(videoIds, --remaining);
-			});
+			ajax(
+				'GET',
+				'https://www.youtube.com/results?sp=EgIQAQ%253D%253D&search_query=' +
+					uri,
+				function(xhr) {
+					videoIds[index] = getVideoIdFromYoutube(
+						xhr.responseText,
+						query
+					);
+					display(videoIds, --remaining);
+				}
+			);
 		});
 	}
 
@@ -109,7 +127,10 @@
 		if (!assign(remaining)) return;
 		videoIds = videoIds.filter(Boolean);
 		if (videoIds.length === 0) {
-			chrome.tabs.sendMessage(tabId, { method: 'alert', alert: 'Could not find youtube videos'});
+			chrome.tabs.sendMessage(tabId, {
+				method: 'alert',
+				alert: 'Could not find youtube videos',
+			});
 		} else {
 			link.value =
 				'https://www.youtube.com/watch_videos?video_ids=' +
@@ -119,22 +140,30 @@
 
 	function assign(n) {
 		if (n === 0) {
-			chrome.browserAction.setBadgeText({text: ""});
+			chrome.browserAction.setBadgeText({ text: '' });
 			return true;
 		} else {
-			chrome.browserAction.setBadgeText({text: n.toString()});
+			chrome.browserAction.setBadgeText({ text: n.toString() });
 			return false;
 		}
 	}
 
 	function getVideoIdFromYoutube(text, query) {
-		var resultsMatch = text.match(/window\["ytInitialData"\] = (.+?);\s+window\["ytInitialPlayerResponse"\]/, 1);
+		var resultsMatch = text.match(
+			/window\["ytInitialData"\] = (.+?);\s+window\["ytInitialPlayerResponse"\]/,
+			1
+		);
 		if (!resultsMatch || resultsMatch.length < 2) {
-			chrome.tabs.sendMessage(tabId, 'no videos found for ' + query + '!');
+			chrome.tabs.sendMessage(
+				tabId,
+				'no videos found for ' + query + '!'
+			);
 			return null;
 		}
-		var parsed = JSON.parse(resultsMatch[1])
-		var results = parsed.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents[0].itemSectionRenderer.contents;
+		var parsed = JSON.parse(resultsMatch[1]);
+		var results =
+			parsed.contents.twoColumnSearchResultsRenderer.primaryContents
+				.sectionListRenderer.contents[0].itemSectionRenderer.contents;
 		var highScore = -1;
 		var videoId;
 		results.forEach(function(result) {
@@ -148,7 +177,8 @@
 		return videoId;
 	}
 
-	function getScore(result) { // todo
+	function getScore(result) {
+		// todo
 		return 0;
 	}
 
