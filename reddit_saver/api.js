@@ -17,6 +17,7 @@ var users = {};
 var posts = {};
 
 function login(code, err_callback, callback) {
+	console.log('login');
 	request(
 		{
 			method: 'POST',
@@ -29,7 +30,9 @@ function login(code, err_callback, callback) {
 			auth: { user: client_id },
 		},
 		request_helper(err_callback, function(body) {
+			console.log('request_helper return');
 			get_user(body.access_token, err_callback, function(user) {
+				console.log('get_user return');
 				if (typeof users[user] === 'undefined') {
 					users[user] = {
 						access_token: body.access_token,
@@ -46,6 +49,7 @@ function login(code, err_callback, callback) {
 }
 
 function get_user(access_token, err_callback, callback) {
+	console.log('get_user');
 	request(
 		{
 			uri: 'https://oauth.reddit.com/api/v1/me',
@@ -59,6 +63,7 @@ function get_user(access_token, err_callback, callback) {
 }
 
 function request_helper(err_callback, callback) {
+	console.log('request_helper');
 	if (!err_callback) err_callback = console.log;
 	if (!callback) callback = function() {};
 	return function(err, res, body_string) {
@@ -76,6 +81,7 @@ function request_helper(err_callback, callback) {
 }
 
 function refresh(user) {
+	console.log('refresh', user);
 	request(
 		{
 			method: 'POST',
@@ -98,6 +104,7 @@ function is_NSFW(post_id) {
 }
 
 function get_liked(user, callback) {
+	console.log('get_liked', user);
 	get_liked_helper(user, null, new Set(), callback);
 }
 
@@ -128,6 +135,7 @@ function get_liked_helper(user, after, liked, callback) {
 }
 
 function save(user, post_id) {
+	console.log('save', user, post_id);
 	request(
 		{
 			method: 'POST',
@@ -145,6 +153,7 @@ function save(user, post_id) {
 }
 
 function unsave(user, post_id) {
+	console.log('unsave', user, post_id);
 	request(
 		{
 			method: 'POST',

@@ -23,6 +23,7 @@ function execute() {
 }
 
 function handle(user) {
+	console.log('handle', user);
 	var o = data[user];
 	api.get_liked(user, function(liked) {
 		save(user, o.saved, liked, true);
@@ -57,6 +58,7 @@ function unsave(user, saved, liked) {
 setInterval(execute, execute_period);
 
 function init(user, children) {
+	console.log('init', user, children);
 	data[user] = {
 		saved: new Set([]),
 		children: children,
