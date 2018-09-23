@@ -1,3 +1,12 @@
+var log = console.log;
+console.log = function() {
+	var arr = Array.from(arguments);
+	var d = new Date();
+	var dateString = `${d.toDateString()} ${d.toTimeString().split(' ')[0]}`;
+	arr.unshift(dateString);
+	log(...arr);
+};
+
 var express = require('express');
 var bodyParser = require('body-parser');
 
