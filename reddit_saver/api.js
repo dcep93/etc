@@ -4,7 +4,7 @@ var request = require('request');
 var config = require('./config');
 
 var client_id = config.client_id;
-var redirect_uri = 'http://localhost:' + config.port;
+var redirect_uri = 'http://localhost:8080';
 
 // {
 // 	user string: {
