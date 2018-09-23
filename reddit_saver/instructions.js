@@ -73,6 +73,7 @@ CHILDREN=$(get_children)
 {
 	set -x
 	curl -X POST -H "Content-Type: application/json" -d "{\\"code\\": \\"$CODE\\", \\"children\\": $CHILDREN}" $HOST
+	echo
 }
 `
 	.replace('$CLIENT_ID', client_id)
