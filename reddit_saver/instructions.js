@@ -62,6 +62,8 @@ function get_children_helper() {
 	[[ -z "$CHILD" ]] && echo $PREVIOUS_CHILDREN || echo $(get_children_helper "$(join "$PREVIOUS_CHILDREN" "$(get_child $CHILD)")")
 }
 
+which xmllint || fail 'xmllint not installed'
+
 echo -n "reddit username: "
 read USER < /dev/tty
 
