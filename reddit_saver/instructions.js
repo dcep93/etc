@@ -62,7 +62,7 @@ function get_children_helper() {
 	[[ -z "$CHILD" ]] && echo $PREVIOUS_CHILDREN || echo $(get_children_helper "$(join "$PREVIOUS_CHILDREN" "$(get_child $CHILD)")")
 }
 
-which xmllint || fail 'xmllint not installed'
+which xmllint || fail 'xmllint not installed - try \`apt-get install libxml2-utils\`'
 
 echo -n "reddit username: "
 read USER < /dev/tty
