@@ -3,7 +3,7 @@
 
   "name": "Biscuit",
   "description": "This extension scrapes youtube links from a web page and creates a link that will combine these videos into a playlist.",
-  "version": "0.1.3",
+  "version": "0.1.4",
 
   "browser_action": {
     "default_icon": "the_doge_t.png",
