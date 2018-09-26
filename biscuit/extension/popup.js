@@ -42,9 +42,10 @@
 
 			var match;
 			var videoRegex = new RegExp(
-				/(youtube\.com\/(watch\?v=|embed\/)|youtu.be(\/|%2F))([A-Za-z0-9\-_]+)/g
+				/(youtube\.com\/(watch\?v=|embed\/)|youtu.be(\/|%2F))([A-Za-z0-9\-_]+)(\.\.\.)?/g
 			);
 			while ((match = videoRegex.exec(innerHTML)) !== null) {
+				if (match[5] !== undefined) continue;
 				var videoId = match[4];
 				videoIds.add(videoId);
 			}
