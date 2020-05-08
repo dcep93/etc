@@ -1,19 +1,19 @@
-(function() {
-	var div = document.getElementById('main');
-	var link = document.getElementById('link');
+(function () {
+	var div = document.getElementById("main");
+	var link = document.getElementById("link");
 
-	link.onclick = function() {
+	link.onclick = function () {
 		this.setSelectionRange(0, this.value.length);
 	};
 	var tabId;
 
-	chrome.tabs.query({ currentWindow: true, active: true }, function(tabs) {
+	chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 		tabId = tabs[0].id;
 		scrape();
 	});
 
 	function scrape() {
-		chrome.runtime.sendMessage({ method: 'init', tabId: tabId }, function(
+		chrome.runtime.sendMessage({ method: "init", tabId: tabId }, function (
 			initResponse
 		) {
 			if (initResponse.success) {
@@ -23,15 +23,18 @@
 	}
 
 	function getContentAndScrape() {
-		chrome.tabs.sendMessage(tabId, { method: 'getContent' }, null, function(
-			contentResponse
-		) {
-			if (contentResponse) {
-				scrapeFromContent(contentResponse);
-			} else {
-				setTimeout(getContentAndScrape, 100);
+		chrome.tabs.sendMessage(
+			tabId,
+			{ method: "getContent" },
+			null,
+			function (contentResponse) {
+				if (contentResponse) {
+					scrapeFromContent(contentResponse);
+				} else {
+					setTimeout(getContentAndScrape, 1000);
+				}
 			}
-		});
+		);
 	}
 
 	function scrapeFromContent(contentResponse) {
@@ -52,24 +55,24 @@
 
 			if (videoIds.size == 0) {
 				div.hidden = true;
-				chrome.tabs.sendMessage(tabId, { method: 'noVideos' });
+				chrome.tabs.sendMessage(tabId, { method: "noVideos" });
 			} else {
 				div.hidden = false;
 				link.value =
-					'https://www.youtube.com/watch_videos?video_ids=' +
-					Array.from(videoIds).join(',');
+					"https://www.youtube.com/watch_videos?video_ids=" +
+					Array.from(videoIds).join(",");
 			}
 		}
 	}
 
 	function clipboard() {
 		link.select();
-		document.execCommand('copy');
+		document.execCommand("copy");
 	}
 
 	function log(message) {
 		chrome.runtime.sendMessage({
-			method: 'log',
+			method: "log",
 			message: message,
 		});
 	}
@@ -78,7 +81,7 @@
 		window.open(link.value);
 	}
 
-	document.getElementById('clipboard').onclick = clipboard;
-	document.getElementById('scrape').onclick = scrape;
-	document.getElementById('open').onclick = open;
+	document.getElementById("clipboard").onclick = clipboard;
+	document.getElementById("scrape").onclick = scrape;
+	document.getElementById("open").onclick = open;
 })();
