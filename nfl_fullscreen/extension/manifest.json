@@ -1,0 +1,25 @@
+{
+  "name": "NFL Fullscreen",
+  "description": "Makes the stream on live-nfl.net become full screen within the browser.",
+  "version": "0.0.1",
+  "permissions": [],
+  "icons": {
+    "16": "favicon.png",
+    "48": "favicon.png",
+    "128": "favicon.png"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://live-nfl.net/**"],
+      "js": ["content_script.js"]
+    }
+  ],
+  "browser_action": {
+    "default_icon": "favicon.png"
+  },
+  "manifest_version": 2
+}
