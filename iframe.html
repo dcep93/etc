@@ -1,0 +1,4 @@
+<script src="https://unpkg.com/@ungap/custom-elements-builtin"></script>
+<script type="module" src="https://unpkg.com/x-frame-bypass"></script>
+<iframe id="iframe" is="x-frame-bypass"></iframe>
+<script>document.getElementById('iframe').src = location.search.substr(1);</script>
