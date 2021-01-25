@@ -6,7 +6,9 @@ grid = [
 ]
 targets = [3, 3, 3, 13]
 
+# can a number cell be used in multiple groups?
 allow_reuse = False
+# operation, is_commutative
 operations = {
     '+': (lambda a,b: float(a+b), True),
     '-': (lambda a,b: float(a-b), False),
@@ -52,6 +54,7 @@ def get_solution(g):
     queue = [Solution.default()]
     while queue:
         solution = queue.pop()
+        # no ops left, this is the solution
         if not solution.ops:
             return solution
         queue += get_children(solution, g)
