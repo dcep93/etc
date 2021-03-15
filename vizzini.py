@@ -2,11 +2,25 @@ import sys
 
 from cv2 import imread, VideoWriter, VideoWriter_fourcc
 
-fps = 10
-height = 500
+fps = 5
+height = 750
 
 time_to_y = {
-    250.: None,
+    25: 1400,
+    32: 1800,
+    50: -1,
+    65: 2400,
+    85: -1,
+    96: 2700,
+    124: 4000,
+    144: 5050,
+    160: 5900,
+    180: 6900,
+    192: 7450,
+    207: 7750,
+    220: -1,
+    240: 8460,
+    250: None,
 }
 
 def main():
@@ -16,8 +30,10 @@ def main():
     image_path = sys.argv[1]
     output_path = sys.argv[2]
     source = imread(image_path)
+    print(source.shape)
     size = (source.shape[1], height)
-    out = VideoWriter(output_path, VideoWriter_fourcc(*'DIVX'), fps, size)
+    out = VideoWriter(output_path, VideoWriter_fourcc(*'mp4v'), fps, size)
+    recorded = 0
 
     previous_time = 0.
     previous_y = height
@@ -25,14 +41,19 @@ def main():
         y = time_to_y[target_time]
         if y is None:
             y = source.shape[0]
+        elif y == -1:
+            y = previous_y
         distance = y - previous_y
         duration = target_time - previous_time
         frames = int(fps * duration)
         for frame in range(frames):
-            offset = int(previous_y + (float(distance) * frame / frames))
+            offset = int(previous_y + (distance * frame / float(frames-1)))
             img = source[offset-height:offset]
             out.write(img)
-        previous_time = target_time
+            recorded += 1
+            if recorded % fps == 0:
+                print(recorded / fps, offset)
+        previous_time = float(target_time)
         previous_y = y
     out.release()
 
