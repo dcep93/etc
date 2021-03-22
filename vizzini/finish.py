@@ -89,7 +89,7 @@ def build_out(movie, guitar, sheet, output_path):
 
     for i, sheet_frame_raw in enumerate(sheet):
         if i % progress == 0:
-            print('0.2f' % 1. * i / len(sheet))
+            print('%0.2f%%' % (100. * i / len(sheet)))
         movie_frame = resize(next(movie), (movie_width, movie_height))
         guitar_frame = resize(next(guitar), (guitar_width, guitar_height))
         sheet_frame = resize(sheet_frame_raw, (sheet_width, sheet_height))
