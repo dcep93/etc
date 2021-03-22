@@ -4,24 +4,20 @@ import numpy
 
 from cv2 import imread, VideoWriter, VideoWriter_fourcc
 
-fps = 30
-height = 1750
+fps = 20
+height = 2050
 
 time_to_y = {
-    25: 1400,
-    32: 1800,
+    10: -1,
+    38: 2500,
     50: -1,
-    65: 2400,
+    65: 3200,
     85: -1,
-    96: 2700,
-    124: 4000,
-    144: 5050,
-    160: 5900,
-    180: 6900,
-    192: 7450,
-    207: 7750,
-    220: -1,
-    240: 8460,
+    96: 3900,
+    124: 4900,
+    144: 5700,
+    170: 7200,
+    207: 8500,
     250: None,
 }
 
@@ -57,6 +53,8 @@ def get_sheet(image_path):
             img = source[offset-height:offset]
             sheet.append(img)
             recorded += 1
+            # if recorded % fps == 0:
+            #     print(recorded / fps, offset-height)
         previous_time = float(target_time)
         previous_y = y
     return sheet
