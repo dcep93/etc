@@ -19,7 +19,7 @@ def main():
         output_path,
     ) = sys.argv[1:]
 
-    movie = get_video(movie_path, 0)
+    movie = get_video(movie_path)
     guitar = get_video(guitar_path)
 
     print('getting sheet')
@@ -31,9 +31,6 @@ def main():
     build_out(movie, guitar, sheet, output_path)
 
 def get_video(video_path, pad_left=0):
-    # one frame is thrown away
-    pad_left += 1
-
     cap = cv2.VideoCapture(video_path)
     video_fps = cap.get(cv2.CAP_PROP_FPS)
     ratio = make_sheet.fps / video_fps
@@ -48,7 +45,7 @@ def get_video(video_path, pad_left=0):
         frame = _frame
         if not frame_number:
             print(video_path, frame.shape)
-            for _ in range(int(pad_left * make_sheet.fps)):
+            for _ in range(1+int(pad_left * make_sheet.fps)):
                 yield numpy.zeros(frame.shape)
         frame_number += 1
         while yielded < frame_number * ratio:
@@ -90,7 +87,7 @@ def build_out(movie, guitar, sheet, output_path):
     for i, sheet_frame_raw in enumerate(sheet):
         if i % progress == 0:
             print('%0.2f%%' % (100. * i / len(sheet)))
-        movie_frame = resize(next(movie), (movie_width, movie_height))
+        movie_frame = sharpen(resize(next(movie), (movie_width, movie_height)))
         guitar_frame = resize(next(guitar), (guitar_width, guitar_height))
         sheet_frame = resize(sheet_frame_raw, (sheet_width, sheet_height))
 
@@ -103,6 +100,11 @@ def build_out(movie, guitar, sheet, output_path):
 
 def resize(raw, dsize):
     return cv2.resize(raw, dsize=dsize, interpolation=cv2.INTER_CUBIC)
+
+def sharpen(frame):
+    gaussian = cv2.GaussianBlur(frame, (0, 0), 2.0)
+    alpha = 1.9
+    return cv2.addWeighted(frame, alpha, gaussian, 1 - alpha, 0, frame)
 
 if __name__ == "__main__":
     main()
