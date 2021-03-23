@@ -22,11 +22,7 @@ def main():
     movie = get_video(movie_path, pad=16.4) # socrates at 13.364s 2nd thump 4m07.389s
     guitar = get_video(guitar_path, fps_factor=234.025/234.258) # socrates at 29.763 2nd thump 4m24.021s
 
-    print('getting sheet')
-
     sheet = get_sheet(sheet_path, 16.4, 18.05)
-
-    print('stitching')
 
     build_out(movie, guitar, sheet, output_path)
 
@@ -46,8 +42,8 @@ def get_video(video_path, pad=0, fps_factor=1):
         frame = _frame
         if not frame_number:
             print(video_path, frame.shape, video_fps)
-            for i in range(0, 1, 1/(1+pad_num)):
-                yield frame * i
+            for i in range(1+pad_num):
+                yield i / (1+pad_num) * frame
         frame_number += 1
         while yielded < frame_number * ratio:
             yielded += 1
@@ -59,8 +55,9 @@ def get_video(video_path, pad=0, fps_factor=1):
 def get_sheet(sheet_path, pad_left=0, pad_right=0):
     sheet_raw = make_sheet.get_sheet(sheet_path)
     sheet = []
-    for i in range(0, 1, 1/(pad_left * make_sheet.fps)):
-        sheet.append(i * sheet_raw[0])
+    r = pad_left * make_sheet.fps
+    for i in range(int(r)):
+        sheet.append(i / r * sheet_raw[0])
     for frame in sheet_raw:
         sheet.append(frame)
     for _ in range(int(pad_right * make_sheet.fps)):
