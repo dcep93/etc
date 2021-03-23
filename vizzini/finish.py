@@ -19,18 +19,33 @@ def main():
         output_path,
     ) = sys.argv[1:]
 
-    movie = get_video(movie_path, fps_factor=234.258/234.025, pad=16.4) # socrates at 13.364s 2nd thump 4m07.389s
-    guitar = get_video(guitar_path) # socrates at 29.763 2nd thump 4m24.021s
+    # movie audio is 248.785
+    # movie has 7457 frames
 
-    sheet = get_sheet(sheet_path, 16.4, 18.05)
+    # guitar audio is 268.096
+    # guitar has 8033 frames
+
+    # guitar audio last click 16.831
+    # click last click 1.714
+    # click padding 15.117
+
+    # click duration 265.117
+    # pad = 16.332
+
+    pad = 16.332
+
+    movie = get_video(movie_path, pad=pad)
+    guitar = get_video(guitar_path)
+
+    sheet = get_sheet(sheet_path, pad, 18.05)
 
     build_out(movie, guitar, sheet, output_path)
 
     print('done')
 
-def get_video(video_path, pad=0, fps_factor=1, to_sharpen=False):
+def get_video(video_path, pad=0, to_sharpen=False):
     cap = cv2.VideoCapture(video_path)
-    video_fps = cap.get(cv2.CAP_PROP_FPS) / fps_factor
+    video_fps = cap.get(cv2.CAP_PROP_FPS)
     ratio = make_sheet.fps / video_fps
 
     frame_number = 0
@@ -52,7 +67,7 @@ def get_video(video_path, pad=0, fps_factor=1, to_sharpen=False):
             if to_sharpen:
                 frame = sharpen(frame)
             yield frame
-    print(video_path, frame_number + pad_num)
+    print(video_path, frame_number)
     while True:
         yield numpy.zeros(frame.shape)
 
