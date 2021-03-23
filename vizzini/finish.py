@@ -46,8 +46,8 @@ def get_video(video_path, pad=0, fps_factor=1):
         frame = _frame
         if not frame_number:
             print(video_path, frame.shape, video_fps)
-            for _ in range(1+pad_num):
-                yield numpy.zeros(frame.shape)
+            for i in range(0, 1, 1/(1+pad_num)):
+                yield frame * i
         frame_number += 1
         while yielded < frame_number * ratio:
             yielded += 1
@@ -59,8 +59,8 @@ def get_video(video_path, pad=0, fps_factor=1):
 def get_sheet(sheet_path, pad_left=0, pad_right=0):
     sheet_raw = make_sheet.get_sheet(sheet_path)
     sheet = []
-    for _ in range(int(pad_left * make_sheet.fps)):
-        sheet.append(numpy.zeros(sheet_raw[0].shape))
+    for i in range(0, 1, 1/(pad_left * make_sheet.fps)):
+        sheet.append(i * sheet_raw[0])
     for frame in sheet_raw:
         sheet.append(frame)
     for _ in range(int(pad_right * make_sheet.fps)):
