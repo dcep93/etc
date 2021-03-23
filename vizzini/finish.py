@@ -6,7 +6,7 @@ import cv2
 
 import make_sheet
 
-guitar_height = 300
+guitar_height = 600
 
 def main():
     if len(sys.argv) != 5:
@@ -32,25 +32,21 @@ def main():
     # click duration 265.117
     # pad = 16.332
 
-    # guitar has death at 255.155
-    # padded click has death at 254.943
-    # guitar is 255.155/254.943 too slow
-
     pad = 16.332
 
     movie = get_video(movie_path, pad=pad, to_sharpen=True)
-    guitar = get_video(guitar_path, speed_adjust=255.155/254.943)
+    guitar = get_video(guitar_path)
 
-    sheet = get_sheet(sheet_path, pad, 3.05)
+    sheet = get_sheet(sheet_path, pad, 3)
 
     build_out(movie, guitar, sheet, output_path)
 
     print('done')
 
-def get_video(video_path, pad=0, to_sharpen=False, speed_adjust=1):
+def get_video(video_path, pad=0, to_sharpen=False):
     cap = cv2.VideoCapture(video_path)
     video_fps = cap.get(cv2.CAP_PROP_FPS)
-    ratio = speed_adjust * make_sheet.fps / video_fps
+    ratio = make_sheet.fps / video_fps
 
     frame_number = 0
     yielded = 0
@@ -64,7 +60,7 @@ def get_video(video_path, pad=0, to_sharpen=False, speed_adjust=1):
         if not frame_number:
             print(video_path, frame.shape, video_fps)
             for i in range(1+pad_num):
-                yield i / (1+pad_num) * frame
+                yield fade(i, 1+pad_num) * frame
         frame_number += 1
         while yielded < frame_number * ratio:
             yielded += 1
@@ -80,12 +76,15 @@ def get_sheet(sheet_path, pad_left=0, pad_right=0):
     sheet = []
     r = pad_left * make_sheet.fps
     for i in range(int(r)):
-        sheet.append(i / r * sheet_raw[0])
+        sheet.append(fade(i, r) * sheet_raw[0])
     for frame in sheet_raw:
         sheet.append(frame)
     for _ in range(int(pad_right * make_sheet.fps)):
         sheet.append(numpy.zeros(sheet_raw[0].shape))
     return sheet
+
+def fade(i, total):
+    return (i / total)**1.7
 
 def build_out(movie, guitar, sheet, output_path):
     first_g = next(guitar)
