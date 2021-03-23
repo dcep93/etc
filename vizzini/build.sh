@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -xeuo pipefail
 
 folder=~/Downloads/vizzini
 movie_crop=$folder/movie_crop.mp4

@@ -41,7 +41,7 @@ def main():
     movie = get_video(movie_path, pad=pad, to_sharpen=True)
     guitar = get_video(guitar_path, speed_adjust=255.155/254.943)
 
-    sheet = get_sheet(sheet_path, pad, 18.05)
+    sheet = get_sheet(sheet_path, pad, 3.05)
 
     build_out(movie, guitar, sheet, output_path)
 
