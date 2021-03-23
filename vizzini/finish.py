@@ -6,7 +6,7 @@ import cv2
 
 import make_sheet
 
-guitar_height = 600
+guitar_height = 200
 
 def main():
     if len(sys.argv) != 5:
@@ -19,8 +19,8 @@ def main():
         output_path,
     ) = sys.argv[1:]
 
-    movie = get_video(movie_path, pad=16.4) # socrates at 13.364s 2nd thump 4m07.389s
-    guitar = get_video(guitar_path, fps_factor=234.025/234.258) # socrates at 29.763 2nd thump 4m24.021s
+    movie = get_video(movie_path, fps_factor=234.258/234.025, pad=16.4) # socrates at 13.364s 2nd thump 4m07.389s
+    guitar = get_video(guitar_path) # socrates at 29.763 2nd thump 4m24.021s
 
     sheet = get_sheet(sheet_path, 16.4, 18.05)
 
@@ -28,7 +28,7 @@ def main():
 
     print('done')
 
-def get_video(video_path, pad=0, fps_factor=1):
+def get_video(video_path, pad=0, fps_factor=1, to_sharpen=False):
     cap = cv2.VideoCapture(video_path)
     video_fps = cap.get(cv2.CAP_PROP_FPS) / fps_factor
     ratio = make_sheet.fps / video_fps
@@ -49,7 +49,9 @@ def get_video(video_path, pad=0, fps_factor=1):
         frame_number += 1
         while yielded < frame_number * ratio:
             yielded += 1
-            yield frame[:]
+            if to_sharpen:
+                frame = sharpen(frame)
+            yield frame
     print(video_path, frame_number + pad_num)
     while True:
         yield numpy.zeros(frame.shape)
@@ -88,7 +90,7 @@ def build_out(movie, guitar, sheet, output_path):
     for i, sheet_frame_raw in enumerate(sheet):
         if i % progress == 0:
             print('%0.2f%%' % (100. * i / len(sheet)))
-        movie_frame = sharpen(resize(next(movie), (movie_width, movie_height)))
+        movie_frame = resize(next(movie), (movie_width, movie_height))
         guitar_frame = resize(next(guitar), (guitar_width, guitar_height))
         sheet_frame = resize(sheet_frame_raw, (sheet_width, sheet_height))
 
