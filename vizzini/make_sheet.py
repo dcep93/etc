@@ -4,7 +4,7 @@ import numpy
 
 from cv2 import imread, VideoWriter, VideoWriter_fourcc
 
-fps = 10
+fps = 60
 height = 2050
 
 time_to_y = {

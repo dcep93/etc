@@ -6,7 +6,7 @@ import cv2
 
 import make_sheet
 
-guitar_height = 200
+guitar_height = 600
 
 def main():
     if len(sys.argv) != 5:
