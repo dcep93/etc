@@ -6,7 +6,7 @@ import cv2
 
 import make_sheet
 
-guitar_height = 600
+guitar_height = 300
 
 def main():
     if len(sys.argv) != 5:
@@ -32,10 +32,14 @@ def main():
     # click duration 265.117
     # pad = 16.332
 
+    # guitar has death at 255.155
+    # padded click has death at 254.943
+    # guitar is 255.155/254.943 too slow
+
     pad = 16.332
 
-    movie = get_video(movie_path, pad=pad)
-    guitar = get_video(guitar_path)
+    movie = get_video(movie_path, pad=pad, to_sharpen=True)
+    guitar = get_video(guitar_path, speed_adjust=255.155/254.943)
 
     sheet = get_sheet(sheet_path, pad, 18.05)
 
@@ -43,10 +47,10 @@ def main():
 
     print('done')
 
-def get_video(video_path, pad=0, to_sharpen=False):
+def get_video(video_path, pad=0, to_sharpen=False, speed_adjust=1):
     cap = cv2.VideoCapture(video_path)
     video_fps = cap.get(cv2.CAP_PROP_FPS)
-    ratio = make_sheet.fps / video_fps
+    ratio = speed_adjust * make_sheet.fps / video_fps
 
     frame_number = 0
     yielded = 0
@@ -67,7 +71,7 @@ def get_video(video_path, pad=0, to_sharpen=False):
             if to_sharpen:
                 frame = sharpen(frame)
             yield frame
-    print(video_path, frame_number)
+    print(video_path, frame_number, yielded)
     while True:
         yield numpy.zeros(frame.shape)
 
