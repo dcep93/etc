@@ -19,38 +19,40 @@ def main():
         output_path,
     ) = sys.argv[1:]
 
-    movie = get_video(movie_path)
-    guitar = get_video(guitar_path)
+    movie = get_video(movie_path, pad=16.4) # socrates at 13.364s 2nd thump 4m07.389s
+    guitar = get_video(guitar_path, fps_factor=234.025/234.258) # socrates at 29.763 2nd thump 4m24.021s
 
     print('getting sheet')
 
-    sheet = get_sheet(sheet_path, 0, 18.05)
+    sheet = get_sheet(sheet_path, 16.4, 18.05)
 
     print('stitching')
 
     build_out(movie, guitar, sheet, output_path)
 
-def get_video(video_path, pad_left=0):
+def get_video(video_path, pad=0, fps_factor=1):
     cap = cv2.VideoCapture(video_path)
-    video_fps = cap.get(cv2.CAP_PROP_FPS)
+    video_fps = cap.get(cv2.CAP_PROP_FPS) / fps_factor
     ratio = make_sheet.fps / video_fps
 
     frame_number = 0
     yielded = 0
     frame = None
+    pad_num = int(pad * make_sheet.fps)
     while cap.isOpened():
         ret, _frame = cap.read()
         if not ret:
             break
         frame = _frame
         if not frame_number:
-            print(video_path, frame.shape)
-            for _ in range(1+int(pad_left * make_sheet.fps)):
+            print(video_path, frame.shape, video_fps)
+            for _ in range(1+pad_num):
                 yield numpy.zeros(frame.shape)
         frame_number += 1
         while yielded < frame_number * ratio:
             yielded += 1
             yield frame[:]
+    print(video_path, frame_number + pad_num)
     while True:
         yield numpy.zeros(frame.shape)
 
