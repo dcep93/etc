@@ -18,3 +18,5 @@ python3 finish.py $movie_crop $guitar $sheet $video &&
   rm -f "$vizzini" &&
   ffmpeg -i "$video" -itsoffset -"$offset" -i "$audio" -map 0:0 -map 1:0 -c copy -c:a copy -vcodec libx264 "$vizzini" &&
   open "$vizzini"
+
+date

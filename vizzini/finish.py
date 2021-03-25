@@ -35,7 +35,7 @@ def main():
     pad = 16.332
 
     movie = get_video(movie_path, pad=pad, to_sharpen=True)
-    guitar = get_video(guitar_path)
+    guitar = get_video(guitar_path, adjust_fps=263.757/263.341)
 
     sheet = get_sheet(sheet_path, pad, 3)
 
@@ -43,9 +43,9 @@ def main():
 
     print('done')
 
-def get_video(video_path, pad=0, to_sharpen=False):
+def get_video(video_path, pad=0, to_sharpen=False, adjust_fps=1):
     cap = cv2.VideoCapture(video_path)
-    video_fps = cap.get(cv2.CAP_PROP_FPS)
+    video_fps = adjust_fps * cap.get(cv2.CAP_PROP_FPS)
     ratio = make_sheet.fps / video_fps
 
     frame_number = 0
