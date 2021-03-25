@@ -14,7 +14,10 @@ def count(n):
             rval += d
     return rval
 
+last = 1
 for i in range(15):
-    print(i, count(2**i))
+    val = count(3**i)
+    print(i, val, val / last)
+    last = val + 1
 
 print('done')
