@@ -1,6 +1,6 @@
-const v_delay = 1000; // ms
-const select_delay = 1000; // ms
-const post_delay = 1000; // ms
+const v_delay = 2000; // ms
+const select_delay = 2000; // ms
+const post_delay = 2000; // ms
 const maybe_loop_delay = 2000; // ms
 const ensure_delay = 100; // ms
 
@@ -13,7 +13,8 @@ function v() {
 }
 
 function ensure(f, delay: number) {
-  setTimeout(() => ensureH(f), delay * 2);
+  delay = (Math.random() / 2 + 1) * delay;
+  setTimeout(() => ensureH(f), delay);
 }
 
 function ensureH(f, retries: number = 3) {
@@ -82,6 +83,8 @@ function post() {
 
 function maybe_loop() {
   if (location.href === "https://myturn.ca.gov/ineligible-register") {
+    location.href = "https://myturn.ca.gov/";
+  } else if (location.href === "https://myturn.ca.gov/error") {
     location.href = "https://myturn.ca.gov/";
   } else {
     alert(new Date());
