@@ -1,8 +1,8 @@
-const v_delay = 2000; // ms
-const select_delay = 2000; // ms
-const post_delay = 2000; // ms
+const v_delay = 1000; // ms
+const select_delay = 100; // ms
+const post_delay = 100; // ms
 const maybe_loop_delay = 2000; // ms
-const ensure_delay = 100; // ms
+const ensure_delay = 3000; // ms
 
 function v() {
   if (location.href === "https://myturn.ca.gov/") {
@@ -38,9 +38,9 @@ function advance() {
   ensure(select, select_delay);
 }
 
-function clickableSelects() {
+function runInPage(f) {
   const script = document.createElement("script");
-  script.innerHTML = `${subscript.toString()};subscript();`;
+  script.innerHTML = `${f.toString()};${f.name}();`;
   document.body.appendChild(script);
 }
 
@@ -54,7 +54,7 @@ function subscript() {
 }
 
 function select() {
-  clickableSelects();
+  runInPage(subscript);
   fields.eligibilityQuestionResponse.forEach((obj) => {
     const elem = document.getElementById(obj.id.replace(/\./g, "-"));
     if (obj.type === "multi-select") {
