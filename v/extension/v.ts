@@ -3,12 +3,19 @@ const select_delay = 100; // ms
 const post_delay = 100; // ms
 const maybe_loop_delay = 2000; // ms
 const ensure_delay = 3000; // ms
+const enter_address_delay = 300; // ms
+const location_continue_delay = 1500; // ms
+const check_for_appointments_delay = 1000; // ms
+
+function reset() {
+  location.href = "https://myturn.ca.gov/";
+}
 
 function v() {
   if (location.href === "https://myturn.ca.gov/") {
     ensure(advance, v_delay);
   } else {
-    location.href = "https://myturn.ca.gov/";
+    reset();
   }
 }
 
@@ -44,24 +51,20 @@ function runInPage(f) {
   document.body.appendChild(script);
 }
 
-function subscript() {
+function updateSelects() {
   Array.from(document.getElementsByTagName("select")).forEach((e) => {
-    e.onclick = () => {
-      const key = Object.keys(e).find((k) => k.indexOf("__reactProps$") === 0);
-      e[key].onChange({ target: e });
-    };
+    const key = Object.keys(e).find((k) => k.indexOf("__reactProps$") === 0);
+    e[key].onChange({ target: e });
   });
 }
 
 function select() {
-  runInPage(subscript);
   fields.eligibilityQuestionResponse.forEach((obj) => {
     const elem = document.getElementById(obj.id.replace(/\./g, "-"));
     if (obj.type === "multi-select") {
       elem.click();
     } else if (elem.tagName === "SELECT") {
       (elem as HTMLSelectElement).value = obj.value as string;
-      elem.click();
     } else if (obj.type === "single-select") {
       Array.from(elem.parentElement.getElementsByTagName("input"))
         .find((e) => e.value == obj.value)
@@ -69,6 +72,8 @@ function select() {
     } else if (obj.type === undefined) {
     }
   });
+
+  runInPage(updateSelects);
 
   ensure(post, post_delay);
 }
@@ -83,10 +88,52 @@ function post() {
 
 function maybe_loop() {
   if (location.href === "https://myturn.ca.gov/ineligible-register") {
-    location.href = "https://myturn.ca.gov/";
+    reset();
   } else if (location.href === "https://myturn.ca.gov/error") {
-    location.href = "https://myturn.ca.gov/";
+    reset();
+  } else if (location.href === "https://myturn.ca.gov/location-search") {
+    ensure(enter_address, enter_address_delay);
   } else {
+    alert(new Date());
+  }
+}
+
+function enter_address() {
+  const inputE = document.getElementById(
+    "location-search-input"
+  ) as HTMLInputElement;
+  inputE.value = "San Francisco, CA 94107, USA";
+  runInPage(receiveAddress);
+
+  ensure(location_continue, location_continue_delay);
+}
+
+function receiveAddress() {
+  const e = document.getElementById("location-search-input");
+  const key = Object.keys(e).find((k) => k.indexOf("__reactProps$") === 0);
+  e[key].onChange({ target: e });
+}
+
+function location_continue() {
+  Array.from(document.getElementsByTagName("button"))
+    .find((i) => i.innerText === "Continue")
+    .click();
+
+  ensure(check_for_appointments, check_for_appointments_delay);
+}
+
+function check_for_appointments() {
+  const locations = Array.from(document.getElementsByTagName("div"))
+    .filter((i) => i.getAttribute("data-testid") === "location-select-location")
+    .filter(
+      (i) =>
+        i.getElementsByTagName("h2")[0].innerText !==
+        "Contra Costa - Tice Gymnasium - J&J - Single Dose"
+    );
+  if (locations.length === 0) {
+    reset();
+  } else {
+    console.log(locations);
     alert(new Date());
   }
 }
@@ -138,5 +185,9 @@ var fields = {
   ],
   url: "https://myturn.ca.gov/screening",
 };
+
+fields.eligibilityQuestionResponse.find(
+  (i) => i.id === "q.screening.eligibility.industry"
+).value = "Education and childcare";
 
 v();
