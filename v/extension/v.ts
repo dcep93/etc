@@ -102,7 +102,7 @@ function enter_address() {
   const inputE = document.getElementById(
     "location-search-input"
   ) as HTMLInputElement;
-  inputE.value = "San Francisco, CA 94107, USA";
+  inputE.value = "San Francisco, CA 94117, USA";
   runInPage(receiveAddress);
 
   ensure(location_continue, location_continue_delay);
