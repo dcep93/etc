@@ -1,17 +1,21 @@
+const ensure_retry_delay = 3000; // ms
 const v_delay = 1000; // ms
 const select_delay = 100; // ms
 const post_delay = 100; // ms
 const maybe_loop_delay = 2000; // ms
-const ensure_delay = 3000; // ms
 const enter_address_delay = 300; // ms
 const location_continue_delay = 1500; // ms
 const check_for_appointments_delay = 1000; // ms
+const find_time_delay = 300;
 
 function reset() {
   location.href = "https://myturn.ca.gov/";
 }
 
 function v() {
+  fields.eligibilityQuestionResponse.find(
+    (i) => i.id === "q.screening.eligibility.industry"
+  ).value = "Education and childcare";
   if (location.href === "https://myturn.ca.gov/") {
     ensure(advance, v_delay);
   } else {
@@ -32,7 +36,7 @@ function ensureH(f, retries: number = 3) {
     .catch((err) => {
       console.error(err);
       if (retries > 0) {
-        setTimeout(() => ensureH(f, retries - 1), ensure_delay);
+        setTimeout(() => ensureH(f, retries - 1), ensure_retry_delay);
       }
     });
 }
@@ -123,19 +127,38 @@ function location_continue() {
 }
 
 function check_for_appointments() {
-  const locations = Array.from(document.getElementsByTagName("div"))
+  const moscone = Array.from(document.getElementsByTagName("div"))
     .filter((i) => i.getAttribute("data-testid") === "location-select-location")
-    .filter(
-      (i) =>
-        i.getElementsByTagName("h2")[0].innerText !==
-        "Contra Costa - Tice Gymnasium - J&J - Single Dose"
+    .find((i) =>
+      i.getElementsByTagName("h2")[0].innerText.includes("Moscone Center")
     );
-  if (locations.length === 0) {
+  if (!moscone) {
     reset();
-  } else {
-    console.log(locations);
-    alert(new Date());
+    return;
   }
+  moscone.parentElement.getElementsByTagName("button")[0].click();
+
+  ensure(find_time, find_time_delay);
+}
+
+function find_time() {
+  const appointment_edit = Array.from(
+    document.getElementsByTagName("div")
+  ).find((i) => i.getAttribute("data-testid") === "dose-appointment-edit");
+  if (hash_code(appointment_edit.innerHTML) === -153730450) {
+    reset();
+    return;
+  }
+  document.title = `(!) ${document.title}`;
+  console.log(appointment_edit);
+  alert(new Date());
+}
+
+function hash_code(s: string) {
+  return s.split("").reduce((a, b) => {
+    a = (a << 5) - a + b.charCodeAt(0);
+    return a & a;
+  }, 0);
 }
 
 var fields = {
@@ -185,9 +208,5 @@ var fields = {
   ],
   url: "https://myturn.ca.gov/screening",
 };
-
-fields.eligibilityQuestionResponse.find(
-  (i) => i.id === "q.screening.eligibility.industry"
-).value = "Education and childcare";
 
 v();
