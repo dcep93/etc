@@ -6,7 +6,7 @@ const maybe_loop_delay = 2000; // ms
 const enter_address_delay = 300; // ms
 const location_continue_delay = 1500; // ms
 const check_for_appointments_delay = 1000; // ms
-const find_time_delay = 300;
+const find_time_delay = 1000;
 
 function reset() {
   location.href = "https://myturn.ca.gov/";
@@ -37,6 +37,8 @@ function ensureH(f, retries: number = 3) {
       console.error(err);
       if (retries > 0) {
         setTimeout(() => ensureH(f, retries - 1), ensure_retry_delay);
+      } else {
+        reset();
       }
     });
 }
@@ -142,15 +144,15 @@ function check_for_appointments() {
 }
 
 function find_time() {
-  const appointment_edit = Array.from(
-    document.getElementsByTagName("div")
-  ).find((i) => i.getAttribute("data-testid") === "dose-appointment-edit");
-  if (hash_code(appointment_edit.innerHTML) === -153730450) {
+  const appointment = Array.from(document.getElementsByTagName("button")).find(
+    (i) => i.getAttribute("data-testid") === "appointment-select-timeslot"
+  );
+  if (!appointment) {
     reset();
     return;
   }
   document.title = `(!) ${document.title}`;
-  console.log(appointment_edit);
+  console.log(appointment);
   alert(new Date());
 }
 
