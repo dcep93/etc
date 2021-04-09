@@ -67,6 +67,7 @@ function updateSelects() {
 function select() {
   fields.eligibilityQuestionResponse.forEach((obj) => {
     const elem = document.getElementById(obj.id.replace(/\./g, "-"));
+    if (!elem) return;
     if (obj.type === "multi-select") {
       elem.click();
     } else if (elem.tagName === "SELECT") {
@@ -195,10 +196,19 @@ var fields = {
       value: "No",
       type: "single-select",
     },
-    { id: "q.screening.disability", value: "No", type: "single-select" },
+    {
+      id: "q.screening.disability",
+      value: "No",
+      type: "single-select",
+    },
     {
       id: "q.screening.eligibility.industry",
       value: "Communications and IT",
+      type: "single-select",
+    },
+    {
+      id: "q.screening.homeless",
+      value: "No",
       type: "single-select",
     },
     {
@@ -206,7 +216,19 @@ var fields = {
       value: "San Francisco",
       type: "single-select",
     },
-    { id: "q.screening.accessibility.code", type: "text" },
+    {
+      id: "q.screening.different.county",
+      value: "No",
+      type: "single-select",
+    },
+    {
+      id: "q.screening.county.of.work",
+      type: "single-select",
+    },
+    {
+      id: "q.screening.accessibility.code",
+      type: "text",
+    },
   ],
   url: "https://myturn.ca.gov/screening",
 };
