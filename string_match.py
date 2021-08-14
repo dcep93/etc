@@ -39,6 +39,11 @@ def get_multiplied(a, b):
     return get_multiplied_fft(a, b)
 
 
+for i, j in [[1, 0], [0, 1, 1, 1, 1]]:
+    if get_multiplied_fft(i, j) != get_multiplied_basic(i, j):
+        print(i, j)
+        exit()
+
 # print(get_multiplied([1, 0], [0, 1, 1, 1, 1]))
 
 # assert find('hi', 'history') == 0
