@@ -1,4 +1,4 @@
-from numpy.fft import fft, ifft
+from numpy.fft import rfft, irfft
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -7,7 +7,7 @@ warnings.filterwarnings('ignore')
 def find(needle, haystack):
     n = [ord(i) - ord('a') for i in needle]
     h = [ord(i) - ord('a') for i in haystack]
-    multiplied = get_multiplied(n[::-1], h)
+    multiplied = get_multiplied_fft(n[::-1], h)
     n2 = sum([i**2 for i in n])
     h2 = sum([i**2 for i in h[:len(n) - 1]])
     for i in range(len(h) - len(n) + 1):
@@ -19,24 +19,9 @@ def find(needle, haystack):
     return -1
 
 
-def get_multiplied_basic(a, b):
-    return [
-        sum([
-            a[j] * b[i - j]
-            for j in range(max(0, i - len(b) + 1), min(i + 1, len(a)))
-        ]) for i in range(len(b) + len(a) - 1)
-    ]
-
-
 def get_multiplied_fft(a, b):
     L = len(a) + len(b)
-    a_f = fft(a, L)
-    b_f = fft(b, L)
-    raw = ifft(a_f * b_f)
-    # print(raw)
+    a_f = rfft(a, L)
+    b_f = rfft(b, L)
+    raw = irfft(a_f * b_f)
     return [int(round(i)) for i in raw][:-1]
-
-
-def get_multiplied(a, b):
-    # return get_multiplied_basic(a, b)
-    return get_multiplied_fft(a, b)
