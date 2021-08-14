@@ -1,4 +1,7 @@
-from numpy.fft import rfft, irfft
+from numpy.fft import fft, ifft
+import warnings
+
+warnings.filterwarnings('ignore')
 
 
 def find(needle, haystack):
@@ -27,27 +30,13 @@ def get_multiplied_basic(a, b):
 
 def get_multiplied_fft(a, b):
     L = len(a) + len(b)
-    a_f = rfft(a, L)
-    b_f = rfft(b, L)
-    raw = irfft(a_f * b_f)
+    a_f = fft(a, L)
+    b_f = fft(b, L)
+    raw = ifft(a_f * b_f)
     # print(raw)
-    return [int(round(i)) for i in raw]
+    return [int(round(i)) for i in raw][:-1]
 
 
 def get_multiplied(a, b):
-    return get_multiplied_basic(a, b)
+    # return get_multiplied_basic(a, b)
     return get_multiplied_fft(a, b)
-
-
-for i, j in [([0], [0, 1, 1])]:
-    x, y = get_multiplied_fft(i, j), get_multiplied_basic(i, j)
-    if x != y:
-        print('mismatch', i, j)
-        print(x, y)
-        exit()
-
-# print(get_multiplied([1, 0], [0, 1, 1, 1, 1]))
-
-# assert find('hi', 'history') == 0
-# assert find('lo', 'hello') == 3
-# assert find('x', 'abcdefg') == -1
