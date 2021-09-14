@@ -14,7 +14,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://live-nfl.net/**"],
+      "matches": ["https://live-nfl.net/**", "http://weakstreams.com/nfl-streams/**"],
       "js": ["content_script.js"]
     }
   ],
