@@ -2,23 +2,22 @@
 # 420 / 69 = 6
 
 import sys
-import typing
 
 BASE = 2
 
 def divide(a: int, b: int) -> int:
     if b == 0: return 0
-    quotient, _remainder = divide_helper(a, b, b, 1)
+    quotient = divide_helper(a, b, b, 1)
     return quotient
     
-def divide_helper(a: int, b: int, big_b: int, previous_product: int) -> typing.Tuple[int, int]:
+def divide_helper(a: int, b: int, big_b: int, previous_product: int) -> int:
     if a < b:
-        return 0, a
+        return 0
     remainder = a - big_b
     if remainder > big_b:
         return divide_helper(a, b, big_b * BASE, previous_product * BASE)
-    next_quotient, next_remainder = divide_helper(remainder, b, b, 1)
-    return previous_product + next_quotient, next_remainder
+    next_quotient = divide_helper(remainder, b, b, 1)
+    return previous_product + next_quotient
 
 def main():
     a, b = sys.argv[1:]
