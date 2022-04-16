@@ -5,6 +5,13 @@ import sys
 
 BASE = 2
 
+def main():
+    a, b = sys.argv[1:]
+    a = int(a)
+    b = int(b)
+    c = divide(a, b)
+    print(f'{a} / {b} = {c}')
+
 def divide(a: int, b: int) -> int:
     if b == 0: return 0
     quotient = divide_helper(a, b, b, 1)
@@ -18,13 +25,6 @@ def divide_helper(a: int, b: int, big_b: int, previous_product: int) -> int:
         return divide_helper(a, b, big_b * BASE, previous_product * BASE)
     next_quotient = divide_helper(remainder, b, b, 1)
     return previous_product + next_quotient
-
-def main():
-    a, b = sys.argv[1:]
-    a = int(a)
-    b = int(b)
-    c = divide(a, b)
-    print(f'{a} / {b} = {c}')
 
 if __name__ == "__main__":
     main()
