@@ -1,3 +1,6 @@
+# ➜  etc git:(master) python3 hunt/divide.py 420 69
+# 420 / 69 = 6
+
 import sys
 import typing
 
@@ -22,7 +25,7 @@ def main():
     a = int(a)
     b = int(b)
     c = divide(a, b)
-    print(a, b, c)
+    print(f'{a} / {b} = {c}')
 
 if __name__ == "__main__":
     main()
