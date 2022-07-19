@@ -51,10 +51,10 @@ def get_team_names() -> typing.List[str]:
     resp = requests.get("https://www.espn.com/nfl/teams")
     soup = BeautifulSoup(resp.content, 'html.parser')
     hrefs = [i['href'] for i in soup.find_all('a', text='Schedule', href=True)]
-    return [
+    return sorted([
         href.split("/")[-1] for href in hrefs
         if href.startswith("/nfl/team/schedule")
-    ]
+    ])
 
 
 def get_prediction(team_name: str) -> typing.List[PredictionType]:
