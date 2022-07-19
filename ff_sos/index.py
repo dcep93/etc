@@ -24,7 +24,7 @@ class PredictionType(BaseModel):
 
 
 def main():
-    team_names = get_team_names()[:8]
+    team_names = get_team_names()
     with concurrent.futures.ThreadPoolExecutor(NUM_EXECUTORS) as executor:
         _predictions = executor.map(get_prediction, team_names)
         predictions = list(_predictions)
