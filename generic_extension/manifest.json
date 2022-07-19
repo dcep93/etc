@@ -1,0 +1,11 @@
+{
+    "name": "Generic_Extension",
+    "description": "dcep93 hacks",
+    "version": "0.0.1",
+    "content_scripts": [{
+        "matches": ["https://colonist.io/**"],
+        "js": ["colonist.io.js"],
+        "all_frames": true
+    }],
+    "manifest_version": 3
+}
