@@ -33,7 +33,7 @@ def main():
             score = get_score(
                 predictions[i],
                 predictions[j],
-                [team_names[k] for k in [i, j]],
+                [f"+{team_names[k]}" for k in [j, i]],
             )
             scores.append(score)
     sorted_scores = sorted(
@@ -42,9 +42,9 @@ def main():
         reverse=True,
     )
     for score in sorted_scores:
-        print(f"{score.score} = {','.join(score.teams)}")
+        print(f"{','.join(score.teams)} = {score.score}")
         for pick in score.picks:
-            print(f"\t+{pick}")
+            print(f"\t{pick}")
 
 
 def get_team_names() -> typing.List[str]:
