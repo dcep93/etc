@@ -19,14 +19,19 @@ class ScoreType(BaseModel):
 
 class PredictionType(BaseModel):
     probability: float
+    score: float
     pick: str
 
 
 def main():
-    team_names = get_team_names()
+    team_names = get_team_names()[:8]
     with concurrent.futures.ThreadPoolExecutor(NUM_EXECUTORS) as executor:
         _predictions = executor.map(get_prediction, team_names)
         predictions = list(_predictions)
+    for i, team_name in enumerate(team_names):
+        print(f"-{team_name}")
+        for p in predictions[i]:
+            print(f"\t{p.pick} -> {p.score}")
     scores: typing.List[ScoreType] = []
     for i in range(1, len(team_names)):
         for j in range(i):
@@ -93,9 +98,15 @@ def get_prediction(team_name: str) -> typing.List[PredictionType]:
         else:
             probability = away_prob / (home_prob + away_prob)
             pick = f"{away_team} @ {home_team} = {away_prob}"
+
+        s = probability
+        s = 10 * (s - 0.5)
+        s = s**3
+        score = s
         return PredictionType(
             probability=probability,
             pick=pick,
+            score=score,
         )
 
     return [helper(i) for i in game_links[:NUM_WEEKS]]
@@ -134,12 +145,8 @@ def get_score(
         else:
             team = team_b
 
-        p = team[i].pick
-        s = team[i].probability
-        s = 10 * (s - 0.5)
-        s = s**3
-        score += s
-        picks.append(f"{p} -> {s}")
+        score += team[i].score
+        picks.append(team[i].pick)
     return ScoreType(
         score=score,
         picks=picks,
