@@ -28,6 +28,7 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(NUM_EXECUTORS) as executor:
         _predictions = executor.map(get_prediction, team_names)
         predictions = list(_predictions)
+    predictions = predictions  # type: ignore
     for i, team_name in enumerate(team_names):
         print(f"-{team_name}")
         for p in predictions[i]:
