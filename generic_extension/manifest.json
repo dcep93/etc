@@ -3,9 +3,14 @@
     "description": "dcep93 hacks",
     "version": "0.0.1",
     "content_scripts": [{
-        "matches": ["https://colonist.io/**"],
-        "js": ["colonist.io.js"],
+        "matches": ["<all_urls>"],
+        "js": ["typescriptServices.js", "index.js"],
         "all_frames": true
+    }],
+
+    "web_accessible_resources": [{
+        "resources": ["extensions/*"],
+        "matches": ["<all_urls>"]
     }],
     "manifest_version": 3
 }
