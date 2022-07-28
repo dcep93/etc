@@ -1,12 +1,17 @@
 function execute() {
     const paths = [{
-        p: /https:\/\/fantasy\.espn\.com\/football\/draft.*/,
-        jss: [
-            "firebase/firebase-app.js",
-            "firebase/firebase-database.js",
-            "ff_draft.js",
-        ],
-    }, ];
+            p: /https:\/\/fantasy\.espn\.com\/football\/draft.*/,
+            jss: [
+                "firebase/firebase-app.js",
+                "firebase/firebase-database.js",
+                "ff_draft.js",
+            ],
+        },
+        {
+            p: /https:\/\/fantasy\.espn\.com\/football\/mockdraftlobby/,
+            jss: ["mockdraftlobby.js"],
+        },
+    ];
 
     const jss = paths
         .filter((o) => location.href.match(o.p))
