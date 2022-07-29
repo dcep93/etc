@@ -34,12 +34,13 @@ function main() {
     console.log("ff_draft", location.href);
     const db = getDb("react420");
     listen(db, "/ff/draft", receiveUpdate);
+    post(db, "/ff", { draft: [] });
     readAndPostLoop(db);
 }
 
 function receiveUpdate(val) {
     console.log(val);
-    state = val;
+    if (val) state = val;
 }
 
 function readAndPostLoop(db) {
