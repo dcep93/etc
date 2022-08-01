@@ -7,7 +7,7 @@ function main() {
 function loop() {
     Array.from(document.getElementsByTagName("td")).forEach(
         (e) =>
-        (e.style.border = e.innerText.match(/2-Team H2H Points PPR Mock$/) ?
+        (e.style.border = e.innerText.match(/10-Team H2H Points PPR Mock$/) ?
             "2px solid black" :
             "")
     );
