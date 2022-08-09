@@ -8,6 +8,13 @@ function execute() {
             ],
         },
         {
+            p: /https:\/\/www\.nytimes\.com\/games\/wordle\/index\.html/,
+            jss: [
+                "sowpods.txt",
+                "wordle.js",
+            ],
+        },
+        {
             p: /https:\/\/fantasy\.espn\.com\/football\/mockdraftlobby/,
             jss: ["mockdraftlobby.js"],
         },
@@ -29,6 +36,12 @@ function allPromises(arr) {
 
 function fileToPromise(fileName) {
     const url = chrome.runtime.getURL(`extensions/${fileName}`);
+    if (fileName.endsWith(".txt")) {
+        const d = document.createElement("data")
+        d.setAttribute("id", fileName)
+        document.head.appendChild(d)
+        return fetch(url).then(resp => resp.text()).then(text => d.innerHTML = text)
+    }
     const s = document.createElement("script");
     s.src = url;
     return new Promise((resolve, reject) => {
