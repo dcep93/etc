@@ -1,53 +1,53 @@
 function execute() {
-    const paths = [{
-            p: /https:\/\/fantasy\.espn\.com\/football\/draft.*/,
-            jss: [
-                "firebase/firebase-app.js",
-                "firebase/firebase-database.js",
-                "ff_draft.js",
-            ],
-        },
-        {
-            p: /https:\/\/www\.nytimes\.com\/games\/wordle\/index\.html/,
-            jss: [
-                "sowpods.txt",
-                "wordle.js",
-            ],
-        },
-        {
-            p: /https:\/\/fantasy\.espn\.com\/football\/mockdraftlobby/,
-            jss: ["mockdraftlobby.js"],
-        },
-    ];
+  const paths = [
+    {
+      p: /https:\/\/fantasy\.espn\.com\/football\/draft.*/,
+      jss: [
+        "firebase/firebase-app.js",
+        "firebase/firebase-database.js",
+        "ff_draft.js",
+      ],
+    },
+    {
+      p: /https:\/\/www\.nytimes\.com\/games\/wordle\/index\.html/,
+      jss: ["sowpods.txt", "wordle.js"],
+    },
+    {
+      p: /https:\/\/fantasy\.espn\.com\/football\/mockdraftlobby/,
+      jss: ["mockdraftlobby.js"],
+    },
+  ];
 
-    const jss = paths
-        .filter((o) => location.href.match(o.p))
-        .flatMap((o) => o.jss);
+  const jss = paths
+    .filter((o) => location.href.match(o.p))
+    .flatMap((o) => o.jss);
 
-    allPromises(jss.map((js) => () => fileToPromise(js))).catch(alert);
+  allPromises(jss.map((js) => () => fileToPromise(js))).catch(alert);
 }
 
 function allPromises(arr) {
-    if (arr.length === 0) return Promise.resolve();
-    return Promise.resolve()
-        .then(() => arr.shift()())
-        .then(() => allPromises(arr));
+  if (arr.length === 0) return Promise.resolve();
+  return Promise.resolve()
+    .then(() => arr.shift()())
+    .then(() => allPromises(arr));
 }
 
 function fileToPromise(fileName) {
-    const url = chrome.runtime.getURL(`extensions/${fileName}`);
-    if (fileName.endsWith(".txt")) {
-        const d = document.createElement("data")
-        d.setAttribute("id", fileName)
-        document.head.appendChild(d)
-        return fetch(url).then(resp => resp.text()).then(text => d.innerHTML = text)
-    }
-    const s = document.createElement("script");
-    s.src = url;
-    return new Promise((resolve, reject) => {
-        s.onload = resolve;
-        document.head.appendChild(s);
-    });
+  const url = chrome.runtime.getURL(`extensions/${fileName}`);
+  if (fileName.endsWith(".txt")) {
+    const d = document.createElement("data");
+    d.setAttribute("id", fileName);
+    document.head.appendChild(d);
+    return fetch(url)
+      .then((resp) => resp.text())
+      .then((text) => (d.innerHTML = text));
+  }
+  const s = document.createElement("script");
+  s.src = url;
+  return new Promise((resolve, reject) => {
+    s.onload = resolve;
+    document.head.appendChild(s);
+  });
 }
 
 execute();

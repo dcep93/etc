@@ -3,7 +3,7 @@ const PICK_NUMBER = 4;
 const LOOP_PERIOD_MS = 1000;
 
 function main() {
-  loop();
+  if (window.top === window.self) loop();
 }
 
 function loop() {
