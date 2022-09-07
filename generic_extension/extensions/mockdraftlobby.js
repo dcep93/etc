@@ -1,4 +1,4 @@
-const PICK_NUMBER = 4;
+const PICK_NUMBER = 5;
 
 const LOOP_PERIOD_MS = 1000;
 
