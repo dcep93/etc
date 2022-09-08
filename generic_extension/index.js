@@ -1,18 +1,6 @@
 function execute() {
   const paths = [
     {
-      p: /https:\/\/fantasy\.espn\.com\/football\/draft.*/,
-      jss: [
-        "firebase/firebase-app.js",
-        "firebase/firebase-database.js",
-        "ff_draft.js",
-      ],
-    },
-    {
-      p: /https:\/\/fantasy\.espn\.com\/football\/mockdraftlobby/,
-      jss: ["mockdraftlobby.js"],
-    },
-    {
       p: /https:\/\/www\.nytimes\.com\/games\/wordle\/index\.html/,
       jss: ["sowpods.txt", "wordle.js"],
     },
