@@ -11,18 +11,17 @@ func getLines(fileName string) []string {
 		panic(err)
 	}
 
-    fileScanner := bufio.NewScanner(readFile)
- 
-    fileScanner.Split(bufio.ScanLines)
+	fileScanner := bufio.NewScanner(readFile)
+
+	fileScanner.Split(bufio.ScanLines)
 
 	var lines []string
-    for fileScanner.Scan() {
-        line := fileScanner.Text()
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
 		lines = append(lines, line)
-    }
+	}
 
-
-    readFile.Close()
+	readFile.Close()
 
 	return lines
 }
