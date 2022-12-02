@@ -1,5 +1,10 @@
 package main
 
+import (
+	"bufio"
+	"os"
+)
+
 func getLines(fileName string) string[] {
 	readFile, err := os.Open("01.txt")
 	if err != nil {
@@ -15,6 +20,9 @@ func getLines(fileName string) string[] {
         line := fileScanner.Text()
 		lines = append(lines, line)
     }
+
+
+    readFile.Close()
 
 	return lines
 }

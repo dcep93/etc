@@ -1,27 +1,18 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"sort"
 	"strconv"
 )
 
 func main() {
-    readFile, err := os.Open("01.txt")
-	if err != nil {
-		panic(err)
-	}
-
-    fileScanner := bufio.NewScanner(readFile)
- 
-    fileScanner.Split(bufio.ScanLines)
+	lines := getLines("01.txt")
   
 	current := 0
 	var sums []int
-    for fileScanner.Scan() {
-        line := fileScanner.Text()
+    for i := 0; i < len(lines); i++ {
+        line := lines[i]
 		if line == "" {
 			sums = append(sums, current)
 			current = 0
@@ -42,6 +33,4 @@ func main() {
 	
 	fmt.Println(sums[0])
 	fmt.Println(sums[0] + sums[1] + sums[2])
-  
-    readFile.Close()
 }
