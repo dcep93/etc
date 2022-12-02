@@ -4,6 +4,12 @@ function execute() {
       p: /https:\/\/www\.nytimes\.com\/games\/wordle\/index\.html/,
       jss: ["sowpods.txt", "wordle.js"],
     },
+    {
+      p: new RegExp(
+        "https://www.buildinglink.com/V2/Tenant/Postings/PostingAreas.aspx"
+      ),
+      jss: ["buildinglink_postings.js"],
+    },
   ];
 
   const jss = paths
