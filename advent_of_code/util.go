@@ -6,10 +6,11 @@ import (
 )
 
 func getLines(fileName string) []string {
-	readFile, err := os.Open("01.txt")
+	readFile, err := os.Open(fileName)
 	if err != nil {
 		panic(err)
 	}
+	defer readFile.Close()
 
 	fileScanner := bufio.NewScanner(readFile)
 
@@ -20,8 +21,6 @@ func getLines(fileName string) []string {
 		line := fileScanner.Text()
 		lines = append(lines, line)
 	}
-
-	readFile.Close()
 
 	return lines
 }

@@ -11,8 +11,7 @@ func _01() {
 
 	current := 0
 	var sums []int
-	for i := 0; i < len(lines); i++ {
-		line := lines[i]
+	for _, line := range lines {
 		if line == "" {
 			sums = append(sums, current)
 			current = 0
