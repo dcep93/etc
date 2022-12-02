@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func getLines(fileName string) string[] {
+func getLines(fileName string) []string {
 	readFile, err := os.Open("01.txt")
 	if err != nil {
 		panic(err)
@@ -15,7 +15,7 @@ func getLines(fileName string) string[] {
  
     fileScanner.Split(bufio.ScanLines)
 
-	var lines string[]
+	var lines []string
     for fileScanner.Scan() {
         line := fileScanner.Text()
 		lines = append(lines, line)

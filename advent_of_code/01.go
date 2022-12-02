@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func main() {
+func _01() {
 	lines := getLines("01.txt")
   
 	current := 0
