@@ -1,7 +1,8 @@
 package main
 
-// fswatch . | grep --line-buffered -v '\.tmp$' | (while read; do go run . ; done )
+// fswatch . | grep --line-buffered -v '\.tmp$' | (while read f; do clear; python3 15.py ; done )
+// fswatch . | grep --line-buffered -v '\.tmp$' | (while read f; do clear; go run . ; done )
 
 func main() {
-	_09()
+	_16()
 }

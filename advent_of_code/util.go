@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func getLines(fileName string) []string {
@@ -23,4 +25,17 @@ func getLines(fileName string) []string {
 	}
 
 	return lines
+}
+
+func getInts(s string) []int {
+	parts := strings.Split(s, ",")
+	var ints []int
+	for _, part := range parts {
+		i, err := strconv.Atoi(part)
+		if err != nil {
+			panic(err)
+		}
+		ints = append(ints, i)
+	}
+	return ints
 }

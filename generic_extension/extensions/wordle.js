@@ -1,7 +1,7 @@
 function main() {
-  const sowpods = document.getElementById("sowpods.txt").innerHTML;
+  const bank = document.getElementById("wordle.txt").innerHTML;
   const m = /^[a-z]{5}$/;
-  const words = sowpods
+  const words = bank
     .split("\n")
     .map((w) => w.toLowerCase())
     .map((w) => w.split("(")[0])
