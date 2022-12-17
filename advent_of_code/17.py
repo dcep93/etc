@@ -31,7 +31,6 @@ for rawRock in rawRocks.split("\n\n"):
             if lines[-1 - i][j] == '#':
                 rock.append((i, j))
     rocks.append(rock)
-    print(rock)
 
 width = 7
 start = (3, 2)
@@ -70,26 +69,44 @@ def moveIfPossible(rock, position, dir):
     return nextPosition
 
 
+def pRow(index):
+    return ''.join(
+        ['#' if i else '.' if i is None else '@' for i in grid[index]])
+
+
 def p():
     for x in range(max(grid.keys()), -1, -1):
-        print(
-            ''.join(['#' if i else '.' if i is None else '@'
-                     for i in grid[x]]), )
+        print(pRow(x))
     print()
 
 
+def getState():
+    m = max(grid.keys()) if grid else 0
+    return '\n'.join([pRow(i) for i in range(m, max(0, m - 100), -1)])
+
+
 dirs = getDirs()
-for i in range(2022):
+seen = {}
+gens = 1000000000000
+extra = 0
+i = 0
+while i < gens:
     rock = rocks[i % len(rocks)]
+    if extra == 0 and rock == rocks[0]:
+        state = getState()
+        if state in seen:
+            j, old_highest = seen[state]
+            m = int((gens - i - 1) / (i - j))
+            extra = m * (highest - old_highest)
+            i += m * (i - j)
+        else:
+            seen[state] = (i, highest)
     position = add(start, (highest, 0))
     for offset in rock:
         spot = add(position, offset)
         grid[spot[0]][spot[1]] = False
     # p()
     while True:
-        if sum([abs(i) for i in position]) > 10000:
-            print("fail")
-            exit()
         dir = dirs.__next__()
         position = moveIfPossible(rock, position, dir)
         nextPosition = moveIfPossible(rock, position, (-1, 0))
@@ -100,6 +117,7 @@ for i in range(2022):
             # p()
             break
         position = nextPosition
+    i += 1
 
-p()
-print(highest)
+# p()
+print('highest', highest + extra)  # 3065
