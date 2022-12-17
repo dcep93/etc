@@ -45,11 +45,11 @@ func _16() {
 		return fmt.Sprintf("%v %v", n.pos, n.open)
 	}
 
-	defaultDuration := 18
+	defaultDuration := 30
 	shouldPrint := false
+	// shouldPrint = true
 
 	part1 := func() {
-		// return
 		fmt.Println("part1")
 		duration := defaultDuration
 		start := node{pos: "AA", flow: 0, open: make(map[string]bool)}
@@ -92,7 +92,7 @@ func _16() {
 					}
 					key := getKey(nextNode)
 					h, ok := history[key]
-					if !ok || nextNode.flow > h.flow {
+					if !ok || nextNode.flow > h.flow || (nextNode.flow == h.flow && fmt.Sprintf("%v", h.path) > fmt.Sprintf("%v", nextNode.path)) {
 						nextSearch[key] = nextNode
 						history[key] = nextNode
 					}
@@ -107,28 +107,36 @@ func _16() {
 	part2 := func() {
 		// return // {CC 39 map[BB:true]} CC map[BB:true]
 		fmt.Println("part2")
-		num := 1
+		num := 2
 		duration := defaultDuration - ((num - 1) * 4)
 		var posA []string
 		for i := 0; i < num; i++ {
 			posA = append(posA, "AA")
 		}
 		start := node{pos: strings.Join(posA, " "), flow: 0, open: make(map[string]bool)}
-		history := make(map[string][]node)
+		history := make(map[string]int)
 		search := make(map[string]node)
 		key := getKey(start)
 		search[key] = start
-		history[start.pos] = []node{start}
 		flow := 0
 		for i := duration - 1; i >= 0; i-- {
 			if shouldPrint {
-				fmt.Println(i)
+				fmt.Println(i, len(search))
 			}
 			for j := num - 1; j >= 0; j-- {
 				nextSearch := make(map[string]node)
 				for k, s := range search {
 					if shouldPrint {
-						fmt.Println(s, k)
+						fmt.Println(i, s, k)
+					}
+					f := flow - s.flow
+					for pos, t := range tunnels {
+						if !s.open[pos] {
+							f -= i * t.flow
+						}
+					}
+					if f > 0 {
+						continue
 					}
 					pos := strings.Split(s.pos, " ")[j]
 					t := tunnels[pos]
@@ -142,29 +150,10 @@ func _16() {
 							flow = nextNode.flow
 						}
 						key := getKey(nextNode)
-						hs, skip := history[nextNode.pos]
-						if skip {
-							skip = false
-							for _, h := range hs {
-								if skip {
-									continue
-								}
-								if h.flow >= nextNode.flow {
-									hSkip := true
-									for o := range nextNode.open {
-										if !h.open[o] {
-											hSkip = false
-										}
-									}
-									if hSkip {
-										skip = true
-									}
-								}
-							}
-						}
-						if !skip {
+						h := history[key]
+						if nextNode.flow > h {
 							nextSearch[key] = nextNode
-							history[nextNode.pos] = append(history[nextNode.pos], nextNode)
+							history[key] = nextNode.flow
 						}
 					}
 					for _, p := range t.next {
@@ -174,34 +163,14 @@ func _16() {
 							sort.Strings(nextP)
 						}
 						nextNode := node{pos: strings.Join(nextP, " "), flow: s.flow, open: make(map[string]bool), path: append(append([]string{}, s.path...), p)}
-						// fmt.Println(nextNode.path, nextP)
 						for p := range s.open {
 							nextNode.open[p] = true
 						}
 						key := getKey(nextNode)
-						hs, skip := history[nextNode.pos]
-						if skip {
-							skip = false
-							for _, h := range hs {
-								if skip {
-									continue
-								}
-								if h.flow >= nextNode.flow {
-									hSkip := true
-									for o := range nextNode.open {
-										if !h.open[o] {
-											hSkip = false
-										}
-									}
-									if hSkip {
-										skip = true
-									}
-								}
-							}
-						}
-						if !skip {
+						h, skip := history[key]
+						if !skip || nextNode.flow > h {
 							nextSearch[key] = nextNode
-							history[nextNode.pos] = append(history[nextNode.pos], nextNode)
+							history[key] = nextNode.flow
 						}
 					}
 
