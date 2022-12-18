@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -42,7 +43,6 @@ func _18() {
 	}
 
 	part2 := func() {
-		outsides := make(map[string]int)
 		var mins []int
 		var maxes []int
 		for _, cube := range cubes {
@@ -60,8 +60,13 @@ func _18() {
 				}
 			}
 		}
-		var isOutside func(cube []int) int
-		isOutside = func(cube []int) int {
+		outsides := make(map[string]int)
+		var isOutside func(cube []int, depth int) int
+		isOutside = func(cube []int, depth int) int {
+			if depth > 100 {
+				fmt.Println("failed", cube, depth)
+				os.Exit(0)
+			}
 			for i, v := range cube {
 				if v > maxes[i] || v < mins[i] {
 					return 1
@@ -79,10 +84,14 @@ func _18() {
 					c := append([]int{}, cube...)
 					c[j] += i
 					if _, ok := cubes[fmt.Sprintf("%v", c)]; !ok {
-						outside := isOutside(c)
+						outside := isOutside(c, depth+1)
 						if outside == 1 {
 							outsides[key] = 1
 							return 1
+						}
+						if outside == 0 {
+							outsides[key] = 0
+							return 0
 						}
 						if outside == 2 {
 							unsure = true
@@ -92,31 +101,42 @@ func _18() {
 			}
 			if unsure {
 				delete(outsides, key)
-			} else {
-				outsides[key] = 0
+				return 2
 			}
+			outsides[key] = 0
 			return 0
 		}
 		s := 0
-		for _, cube := range cubes {
-			fmt.Println(cube)
+		// for _, cube := range cubes {
+		for _, line := range lines {
+			var cube []int
+			parts := strings.Split(line, ",")
+			for _, part := range parts {
+				point, err := strconv.Atoi(part)
+				if err != nil {
+					panic(err)
+				}
+				cube = append(cube, point)
+			}
+
+			// fmt.Println(cube)
 			for i := -1; i <= 1; i += 2 {
 				for j := range cube {
 					c := append([]int{}, cube...)
 					c[j] += i
 					if _, ok := cubes[fmt.Sprintf("%v", c)]; !ok {
-						if isOutside(c) == 1 {
+						if isOutside(c, 0) == 1 {
 							s += 1
 						}
 					}
 				}
 			}
 		}
-		fmt.Println(s)
+		// fmt.Println(s)
 	}
 
 	part1()
-	part2() // 2551 low
+	part2() // 2551-4692
 
 	fmt.Println("done")
 }
