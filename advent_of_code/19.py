@@ -1,8 +1,10 @@
+minutes = 32
+
 with open("19.txt") as fh:
-    text = fh.read()
+    text = fh.read().replace("\n", "\n\n").replace("Each", "\nEach")
 bps = [[[
     j.split(" ") for j in i.split(".")[0].split("costs ")[-1].split(" and ")
-] for i in bp.split("\n")][1:] for bp in text.split("\n\n")][:1]
+] for i in bp.split("\n")][1:] for bp in text.split("\n\n")][:3]
 
 
 def buy(bank, cost, robots, waited):
@@ -13,28 +15,26 @@ def buy(bank, cost, robots, waited):
         newBank[index] -= int(i[0])
         if newBank[index] < 0:
             return None
+        if waited:
+            if newBank[index] < robots[index]:
+                waited = False
     if waited:
-        for i in range(len(robots)):
-            if newBank[i] < robots[i]:
-                return newBank
         return None
     for i in range(len(robots)):
         newBank[i] += robots[i]
     return newBank
 
 
-def getBest(minutes, m, bank, robots, bp, history):
+def getBest(minutes, oldM, bank, robots, bp, history):
     skip = 'skip'
-    m, h = bank[-1], history
-    expected = [None, skip, skip, 1, skip, 1, skip, 1]
-    for i in range(min(len(expected), len(history)) - 1):
-        if expected[i] != history[i]:
-            return (m, h)
-    print(minutes, m, history)
-    if minutes == 0:
+    m, h = bank[-1] + (robots[-1] * minutes), history
+    if minutes == 1:
         return (m, h)
-    if minutes * (robots[-1] + (int(minutes / 2))) <= m:
-        return (m, history)
+    minutes -= 1
+    if minutes * (minutes + 1) <= 2 * (oldM - m):
+        return (m, h)
+    m = max(m, oldM)
+    # print(len(history) - 1, m, oldM, bank, robots, history)
     for i in reversed(range(len(bp))):
         newBank = buy(bank, bp[i], robots, history[-1] == skip)
         if newBank != None:
@@ -43,7 +43,7 @@ def getBest(minutes, m, bank, robots, bp, history):
                 for j in range(len(robots))
             ]
             (mm, hh) = getBest(
-                minutes - 1,
+                minutes,
                 m,
                 newBank,
                 newRobots,
@@ -54,7 +54,7 @@ def getBest(minutes, m, bank, robots, bp, history):
                 # print(minutes, robots, bank, newBank, bp[1])
                 m, h = mm, hh
     (mm, hh) = getBest(
-        minutes - 1,
+        minutes,
         m,
         buy(bank, [], robots, False),
         robots,
@@ -65,9 +65,6 @@ def getBest(minutes, m, bank, robots, bp, history):
         # print(minutes, robots, bank, newBank, bp[1])
         m, h = mm, hh
     return (m, h)
-
-
-minutes = 25
 
 
 def getNum(bp):
@@ -83,13 +80,17 @@ def getNum(bp):
         bp,
         [None],
     )
-    print(m, h)
+    print(m, len(h), h)
+    print()
     return m
 
 
 s = 0
+p = 1
 for i, bp in enumerate(bps):
+    print(i)
     num = getNum(bp)
-    print(i, num)
     s += (i + 1) * num
+    p *= num
 print(s)
+print(p)
