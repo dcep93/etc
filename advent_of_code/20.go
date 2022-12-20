@@ -15,6 +15,7 @@ func _20() {
 	}
 
 	part1 := func() {
+		return
 		head := &node{}
 		var q []*node
 		prev := head
@@ -147,6 +148,7 @@ func _20() {
 				if !isPositive {
 					v = m - v
 				}
+				fmt.Println(v, isPositive, n)
 				nn := n
 				nn.prev.next = nn.next
 				nn.next.prev = nn.prev
@@ -160,6 +162,7 @@ func _20() {
 			}
 		}
 		p()
+		return
 		n := head
 		for {
 			n = gen(n, true)
