@@ -98,7 +98,7 @@ func _20() {
 		var q []*node
 		r_anchors := map[*node]int{head: 0}
 		anchors := map[int]*node{0: head}
-		var as []int
+		as := []int{0}
 		for i, line := range lines {
 			value, err := strconv.Atoi(line)
 			if err != nil {
