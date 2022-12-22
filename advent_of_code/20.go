@@ -92,7 +92,7 @@ func _20() {
 
 	part2 := func() {
 		key := 811589153
-		width := 3
+		width := 70
 		head := &node{}
 		prev := head
 		var q []*node
@@ -166,7 +166,7 @@ func _20() {
 			}
 			target := ((r + v - 1) % (m)) + 1
 			closest := -1
-			fmt.Println("171", n.value, target, r, v)
+			// fmt.Println("pre", n.value, target, r, v)
 			for _, a := range as {
 				if a <= target {
 					if target == a {
@@ -180,15 +180,36 @@ func _20() {
 							aa := anchors[a]
 							delete(r_anchors, aa)
 							aa = aa.next
+							if aa == n {
+								aa = aa.next
+							}
 							anchors[a] = aa
 							r_anchors[aa] = a
 						}
 						closest = a
 					}
-				} else if r >= a {
+				} else if r > a { // a = 3 target = 1 r = 3
 					aa := anchors[a]
 					delete(r_anchors, aa)
 					aa = aa.prev
+					if aa == n {
+						aa = aa.prev
+					}
+					if target < a {
+					} else {
+					}
+					anchors[a] = aa
+					r_anchors[aa] = a
+				} else if anchor == n && r == a {
+					aa := anchors[a]
+					delete(r_anchors, aa)
+					aa = aa.prev
+					if aa == n {
+						aa = aa.prev
+					}
+					if target < a {
+					} else {
+					}
 					anchors[a] = aa
 					r_anchors[aa] = a
 				}
@@ -207,11 +228,13 @@ func _20() {
 		}
 		for i := 0; i < 10; i++ {
 			fmt.Println(i)
-			p()
+			// p()
 			fmt.Println()
-			for _, n := range q {
-				p()
-				// fmt.Println(n.value)
+			for j, n := range q {
+				// p()
+				if j&100 == 0 {
+					fmt.Println(j, n.value)
+				}
 				nn := getNN(n)
 				if nn == n {
 					continue
