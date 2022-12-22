@@ -96,9 +96,9 @@ func _20() {
 		head := &node{}
 		prev := head
 		var q []*node
-		r_anchors := map[*node]int{head: 0}
-		anchors := map[int]*node{0: head}
-		as := []int{0}
+		r_anchors := map[*node]int{}
+		anchors := map[int]*node{}
+		as := []int{}
 		for i, line := range lines {
 			value, err := strconv.Atoi(line)
 			if err != nil {
@@ -108,9 +108,10 @@ func _20() {
 				prev:  prev,
 				value: value * key,
 			}
-			if i != 0 && i%width == 0 {
-				anchors[i] = n
-				r_anchors[n] = i
+			if i%width == 0 {
+				fmt.Println(i, prev.value)
+				anchors[i] = prev
+				r_anchors[prev] = i
 				as = append(as, i)
 			}
 			if prev != nil {
@@ -127,6 +128,19 @@ func _20() {
 				s = append(s, n.value)
 			}
 			fmt.Println(s)
+			for _, a := range as {
+				n := head
+				for i := 0; i < a; i++ {
+					n = n.next
+				}
+				if anchors[a] != n {
+					fmt.Println(a, n, anchors[a])
+					panic("anchors")
+				}
+				if r_anchors[n] != a {
+					panic("r_anchors")
+				}
+			}
 		}
 		m := len(q) - 1
 		getNN := func(n *node) *node {
@@ -136,30 +150,42 @@ func _20() {
 			}
 			anchor := n
 			for {
-				if v == 0 {
-					return anchor
-				}
 				if _, ok := r_anchors[anchor]; ok {
 					break
+				}
+				if v == 0 {
+					return anchor
 				}
 				anchor = anchor.next
 				v--
 			}
 			r := r_anchors[anchor]
-			target := (r + v) % m
+			if anchor == head {
+				v++
+				r += m + 1
+			}
+			target := ((r + v - 1) % (m)) + 1
 			closest := -1
+			fmt.Println("171", n.value, target, r, v)
 			for _, a := range as {
 				if a <= target {
-					closest = a
-					if r < a {
+					if target == a {
 						aa := anchors[a]
 						delete(r_anchors, aa)
-						aa = aa.next
+						aa = n
 						anchors[a] = aa
 						r_anchors[aa] = a
-
+					} else {
+						if r <= a {
+							aa := anchors[a]
+							delete(r_anchors, aa)
+							aa = aa.next
+							anchors[a] = aa
+							r_anchors[aa] = a
+						}
+						closest = a
 					}
-				} else if r > a {
+				} else if r >= a {
 					aa := anchors[a]
 					delete(r_anchors, aa)
 					aa = aa.prev
@@ -168,9 +194,14 @@ func _20() {
 				}
 			}
 			nn := anchors[closest]
-			diff := target - closest
+			diff := target - closest - 1
+			// fmt.Println("diff", diff, target, closest, nn)
 			for i := 0; i < diff; i++ {
+				if nn == n {
+					nn = nn.next
+				}
 				nn = nn.next
+				// fmt.Println("wut", nn)
 			}
 			return nn
 		}
@@ -179,6 +210,8 @@ func _20() {
 			p()
 			fmt.Println()
 			for _, n := range q {
+				p()
+				// fmt.Println(n.value)
 				nn := getNN(n)
 				if nn == n {
 					continue
@@ -192,7 +225,7 @@ func _20() {
 			}
 		}
 		p()
-		n := head
+		n := head.next
 		for n.value != 0 {
 			n = n.next
 		}
