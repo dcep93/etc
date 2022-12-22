@@ -232,7 +232,7 @@ func _20() {
 			fmt.Println()
 			for j, n := range q {
 				// p()
-				if j&100 == 0 {
+				if j%100 == 0 {
 					fmt.Println(j, n.value)
 				}
 				nn := getNN(n)
