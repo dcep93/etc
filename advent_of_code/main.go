@@ -4,5 +4,5 @@ package main
 // fswatch . | grep --line-buffered -v '\.tmp$' | (while read f; do clear; go run . ; done )
 
 func main() {
-	_20()
+	_22()
 }

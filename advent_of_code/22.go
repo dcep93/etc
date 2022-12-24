@@ -1,0 +1,159 @@
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func _22() {
+	lines := getLines("22.txt")
+	board := lines[:len(lines)-2]
+	path := lines[len(lines)-1]
+
+	position := []int{-1, 0}
+	for i := range board[0] {
+		if board[0][i] == '.' {
+			position[0] = i
+			break
+		}
+	}
+
+	dirs := map[string]bool{"R": true, "L": false}
+	facings := [][]int{
+		{1, 0},
+		{0, 1},
+		{-1, 0},
+		{0, -1},
+	}
+
+	getInstructions := func() []string {
+		var instructions []string
+		var s []rune
+		path = path + " "
+		for _, p := range path {
+			_, ok := dirs[string(p)]
+			if p == ' ' || ok {
+				if len(s) > 0 {
+					instructions = append(instructions, string(s))
+					s = []rune{}
+				}
+				if ok {
+					instructions = append(instructions, string(p))
+				}
+			} else {
+				s = append(s, p)
+			}
+		}
+		return instructions
+	}
+	instructions := getInstructions()
+
+	execute := func(wrap func(bool, []int, int) ([]int, int)) ([]int, int) {
+		position = append([]int{}, position...)
+		facing := 0
+		for ii, instruction := range instructions {
+			_ = ii
+			// fmt.Println(_ii, len(instructions), instruction, position, facing)
+			dir, ok := dirs[instruction]
+			if ok {
+				if dir {
+					facing++
+				} else {
+					facing--
+				}
+				facing = (facing + len(facings)) % len(facings)
+			} else {
+				c, err := strconv.Atoi(instruction)
+				if err != nil {
+					panic(err)
+				}
+				// fmt.Println(f)
+				for i := 0; i < c; i++ {
+					nextPosition := append([]int{}, position...)
+					nextFacing := facing
+					var val byte
+					for {
+						f := facings[nextFacing]
+						// fmt.Println(nextPosition, f)
+						for j, x := range f {
+							nextPosition[j] += x
+						}
+						if nextPosition[1] < 0 || nextPosition[1] >= len(board) {
+							nextPosition, nextFacing = wrap(true, nextPosition, nextFacing)
+							continue
+						}
+						row := board[nextPosition[1]]
+						if nextPosition[0] < 0 || nextPosition[0] >= len(row) {
+							nextPosition, nextFacing = wrap(false, nextPosition, nextFacing)
+							continue
+						}
+						val = row[nextPosition[0]]
+						if val != ' ' {
+							break
+						}
+					}
+					if val == '#' {
+						break
+					}
+					position = nextPosition
+					facing = nextFacing
+				}
+			}
+		}
+		return position, facing
+	}
+
+	part1 := func() {
+		return
+		position, facing := execute(func(rowWrap bool, position []int, facing int) ([]int, int) {
+			f := facings[facing]
+			if rowWrap {
+				if f[1] < 0 {
+					position[1] = len(board)
+				} else if f[1] > 0 {
+					position[1] = -1
+				}
+			} else {
+				if f[0] < 0 {
+					position[0] = len(board[position[1]])
+				} else if f[0] > 0 {
+					position[0] = -1
+				}
+			}
+			return position, facing
+		})
+		score := (1000 * (position[1] + 1)) + (4 * (position[0] + 1)) + facing
+		fmt.Println(position, facing)
+		fmt.Println(score)
+	}
+
+	part2 := func() {
+		width := 4
+		fmt.Println(width)
+		position, facing := execute(func(rowWrap bool, position []int, facing int) ([]int, int) {
+			f := facings[facing]
+			if rowWrap {
+				if f[1] < 0 {
+					position[1] = len(board)
+				} else if f[1] > 0 {
+					position[1] = -1
+				}
+			} else {
+				if f[0] < 0 {
+					position[0] = len(board[position[1]])
+				} else if f[0] > 0 {
+					position[0] = -1
+				}
+			}
+			return position, facing
+		})
+		score := (1000 * (position[1] + 1)) + (4 * (position[0] + 1)) + facing
+		fmt.Println(position, facing)
+		fmt.Println(score)
+	}
+
+	part1()
+	part2()
+
+	fmt.Println("done")
+}
