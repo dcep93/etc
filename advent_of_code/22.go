@@ -49,11 +49,14 @@ func _22() {
 	instructions := getInstructions()
 
 	execute := func(wrap func([]int, int) ([]int, int)) ([]int, int) {
+		// ww := 0
 		position = append([]int{}, position...)
 		facing := 0
-		// position = []int{1, 179}
-		// facing = 1
-		// instructions = []string{instructions[212]}
+		// position = []int{21, 137}
+		// facing = 2
+		// instructions = instructions[72+1948:]
+		// instructions = instructions[:1]
+		// instructions = []string{instructions[72]}
 		for ii, instruction := range instructions {
 			_ = ii
 			// fmt.Println(ii, len(instructions), instruction, position, facing)
@@ -70,7 +73,7 @@ func _22() {
 				if err != nil {
 					panic(err)
 				}
-				pp, ff := position, facing
+				// pp, ff := position, facing
 				wrapped := false
 				for i := 0; i < c; i++ {
 					// fmt.Println(position, facing)
@@ -84,12 +87,18 @@ func _22() {
 							nextPosition[j] += x
 						}
 						if nextPosition[1] < 0 || nextPosition[1] >= len(board) {
+							if wrapped {
+								panic("cant double wrap")
+							}
 							wrapped = true
 							nextPosition, nextFacing = wrap(nextPosition, nextFacing)
 							continue
 						}
 						row := board[nextPosition[1]]
 						if nextPosition[0] < 0 || nextPosition[0] >= 150 {
+							if wrapped {
+								panic("cant double wrap")
+							}
 							wrapped = true
 							nextPosition, nextFacing = wrap(nextPosition, nextFacing)
 							continue
@@ -113,9 +122,10 @@ func _22() {
 					facing = nextFacing
 				}
 				if wrapped {
-					fmt.Println(pp, ff, c, ii)
-					fmt.Println(position, facing)
-					fmt.Println()
+					// ww++
+					// fmt.Println(ww, pp, ff, c, ii)
+					// fmt.Println(position, facing)
+					// fmt.Println()
 				}
 			}
 		}
@@ -152,42 +162,42 @@ func _22() {
 			// fmt.Println("before", position, f, rowWrap)
 			if f[0] == 0 {
 				if f[1] < 0 {
-					if position[0] < 50 {
-						return []int{49, position[0] + 50}, 0 // A
-					} else if position[0] < 100 {
+					if position[0] < 50 { // [0-49, 0]
+						return []int{-1, position[0] + 50}, 0 // A
+					} else if position[0] < 100 { // [50-99, 0]
 						return []int{-1, position[0] + 100}, 0 // B
-					} else if position[0] < 150 {
+					} else if position[0] < 150 { // [100-149, 0]
 						return []int{position[0] - 100, 200}, 3 // C
 					}
 				} else if f[1] > 0 {
-					if position[0] < 50 {
+					if position[0] < 50 { // [0-49, 199]
 						return []int{position[0] + 100, -1}, 1 // C
-					} else if position[0] < 100 {
-						return []int{50, position[0] + 100}, 2 // D
-					} else if position[0] < 150 {
-						return []int{100, position[0] - 50}, 2 // E
+					} else if position[0] < 100 { // [50-99, 199]
+						return []int{150, position[0] + 100}, 2 // D
+					} else if position[0] < 150 { // [100-149, 199]
+						return []int{150, position[0] - 50}, 2 // E
 					}
 				}
 			} else {
 				if f[0] < 0 {
-					if position[1] < 50 {
+					if position[1] < 50 { // [0, 0-49]
 						return []int{-1, 149 - position[1]}, 0 // F
-					} else if position[1] < 100 {
-						return []int{position[1] - 50, 99}, 1 // A
-					} else if position[1] < 150 {
-						return []int{50, 149 - position[1]}, 0 // F
-					} else if position[1] < 200 {
+					} else if position[1] < 100 { // [0, 50-99]
+						return []int{position[1] - 50, -1}, 1 // A
+					} else if position[1] < 150 { // [0, 100-149]
+						return []int{-1, 149 - position[1]}, 0 // F
+					} else if position[1] < 200 { // [0, 150-199]
 						return []int{position[1] - 100, -1}, 1 // B
 					}
 				} else if f[0] > 0 {
-					if position[1] < 50 {
-						return []int{100, 149 - position[1]}, 2 // G
-					} else if position[1] < 100 {
-						return []int{position[1] + 50, 50}, 3 // E
-					} else if position[1] < 150 {
+					if position[1] < 50 { // [149, 0-49]
 						return []int{150, 149 - position[1]}, 2 // G
-					} else if position[1] < 200 {
-						return []int{position[1] - 100, 150}, 3 // D
+					} else if position[1] < 100 { // [149, 50-99]
+						return []int{position[1] + 50, 200}, 3 // E
+					} else if position[1] < 150 { // [149, 100-149]
+						return []int{150, 149 - position[1]}, 2 // G
+					} else if position[1] < 200 { // [149, 150-199]
+						return []int{position[1] - 100, 200}, 3 // D
 					}
 				}
 			}
