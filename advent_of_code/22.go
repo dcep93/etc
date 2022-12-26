@@ -48,12 +48,12 @@ func _22() {
 	}
 	instructions := getInstructions()
 
-	execute := func(wrap func(bool, []int, int) ([]int, int)) ([]int, int) {
+	execute := func(wrap func([]int, int) ([]int, int)) ([]int, int) {
 		position = append([]int{}, position...)
 		facing := 0
-		// position = []int{4, 146}
-		// facing = 2
-		// instructions = instructions[:1]
+		// position = []int{1, 179}
+		// facing = 1
+		// instructions = []string{instructions[212]}
 		for ii, instruction := range instructions {
 			_ = ii
 			// fmt.Println(ii, len(instructions), instruction, position, facing)
@@ -85,20 +85,26 @@ func _22() {
 						}
 						if nextPosition[1] < 0 || nextPosition[1] >= len(board) {
 							wrapped = true
-							nextPosition, nextFacing = wrap(true, nextPosition, nextFacing)
+							nextPosition, nextFacing = wrap(nextPosition, nextFacing)
 							continue
 						}
 						row := board[nextPosition[1]]
-						if nextPosition[0] < 0 || nextPosition[0] >= len(row) {
+						if nextPosition[0] < 0 || nextPosition[0] >= 150 {
 							wrapped = true
-							nextPosition, nextFacing = wrap(false, nextPosition, nextFacing)
-							// fmt.Println("d", nextPosition, nextFacing)
+							nextPosition, nextFacing = wrap(nextPosition, nextFacing)
 							continue
 						}
-						val = row[nextPosition[0]]
+						if nextPosition[0] >= len(row) {
+							val = ' '
+						} else {
+							val = row[nextPosition[0]]
+						}
 						if val != ' ' {
 							break
 						}
+					}
+					if wrapped {
+						// fmt.Println("d", nextPosition, nextFacing)
 					}
 					if val == '#' {
 						break
@@ -106,7 +112,7 @@ func _22() {
 					position = nextPosition
 					facing = nextFacing
 				}
-				if false && wrapped {
+				if wrapped {
 					fmt.Println(pp, ff, c, ii)
 					fmt.Println(position, facing)
 					fmt.Println()
@@ -118,33 +124,33 @@ func _22() {
 
 	part1 := func() {
 		return
-		position, facing := execute(func(rowWrap bool, position []int, facing int) ([]int, int) {
-			f := facings[facing]
-			if rowWrap {
-				if f[1] < 0 {
-					position[1] = len(board)
-				} else if f[1] > 0 {
-					position[1] = -1
-				}
-			} else {
-				if f[0] < 0 {
-					position[0] = len(board[position[1]])
-				} else if f[0] > 0 {
-					position[0] = -1
-				}
-			}
-			return position, facing
-		})
-		score := (1000 * (position[1] + 1)) + (4 * (position[0] + 1)) + facing
-		fmt.Println(position, facing)
-		fmt.Println(score)
+		// position, facing := execute(func(rowWrap bool, position []int, facing int) ([]int, int) {
+		// 	f := facings[facing]
+		// 	if rowWrap {
+		// 		if f[1] < 0 {
+		// 			position[1] = len(board)
+		// 		} else if f[1] > 0 {
+		// 			position[1] = -1
+		// 		}
+		// 	} else {
+		// 		if f[0] < 0 {
+		// 			position[0] = len(board[position[1]])
+		// 		} else if f[0] > 0 {
+		// 			position[0] = -1
+		// 		}
+		// 	}
+		// 	return position, facing
+		// })
+		// score := (1000 * (position[1] + 1)) + (4 * (position[0] + 1)) + facing
+		// fmt.Println(position, facing)
+		// fmt.Println(score)
 	}
 
 	part2 := func() {
-		position, facing := execute(func(rowWrap bool, position []int, facing int) ([]int, int) {
+		position, facing := execute(func(position []int, facing int) ([]int, int) {
 			f := facings[facing]
 			// fmt.Println("before", position, f, rowWrap)
-			if rowWrap {
+			if f[0] == 0 {
 				if f[1] < 0 {
 					if position[0] < 50 {
 						return []int{49, position[0] + 50}, 0 // A
@@ -185,8 +191,8 @@ func _22() {
 					}
 				}
 			}
-			// fmt.Println(position, f, rowWrap)
-			// panic("todo")
+			fmt.Println(position, f)
+			panic("todo")
 			return position, facing
 		})
 		score := (1000 * (position[1] + 1)) + (4 * (position[0] + 1)) + facing
