@@ -12,7 +12,7 @@ import (
 // fswatch . | grep --line-buffered -v '\.tmp$' | (while read f; do clear; go run . ; done )
 
 func main() {
-	_24()
+	_25()
 }
 
 func getLines(fileName string) []string {
