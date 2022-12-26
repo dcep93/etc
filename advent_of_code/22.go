@@ -51,9 +51,12 @@ func _22() {
 	execute := func(wrap func(bool, []int, int) ([]int, int)) ([]int, int) {
 		position = append([]int{}, position...)
 		facing := 0
+		// position = []int{4, 146}
+		// facing = 2
+		// instructions = instructions[:1]
 		for ii, instruction := range instructions {
 			_ = ii
-			// fmt.Println(_ii, len(instructions), instruction, position, facing)
+			// fmt.Println(ii, len(instructions), instruction, position, facing)
 			dir, ok := dirs[instruction]
 			if ok {
 				if dir {
@@ -67,8 +70,10 @@ func _22() {
 				if err != nil {
 					panic(err)
 				}
-				// fmt.Println(f)
+				pp, ff := position, facing
+				wrapped := false
 				for i := 0; i < c; i++ {
+					// fmt.Println(position, facing)
 					nextPosition := append([]int{}, position...)
 					nextFacing := facing
 					var val byte
@@ -79,12 +84,15 @@ func _22() {
 							nextPosition[j] += x
 						}
 						if nextPosition[1] < 0 || nextPosition[1] >= len(board) {
+							wrapped = true
 							nextPosition, nextFacing = wrap(true, nextPosition, nextFacing)
 							continue
 						}
 						row := board[nextPosition[1]]
 						if nextPosition[0] < 0 || nextPosition[0] >= len(row) {
+							wrapped = true
 							nextPosition, nextFacing = wrap(false, nextPosition, nextFacing)
+							// fmt.Println("d", nextPosition, nextFacing)
 							continue
 						}
 						val = row[nextPosition[0]]
@@ -97,6 +105,11 @@ func _22() {
 					}
 					position = nextPosition
 					facing = nextFacing
+				}
+				if false && wrapped {
+					fmt.Println(pp, ff, c, ii)
+					fmt.Println(position, facing)
+					fmt.Println()
 				}
 			}
 		}
@@ -128,23 +141,52 @@ func _22() {
 	}
 
 	part2 := func() {
-		width := 4
-		fmt.Println(width)
 		position, facing := execute(func(rowWrap bool, position []int, facing int) ([]int, int) {
 			f := facings[facing]
+			// fmt.Println("before", position, f, rowWrap)
 			if rowWrap {
 				if f[1] < 0 {
-					position[1] = len(board)
+					if position[0] < 50 {
+						return []int{49, position[0] + 50}, 0 // A
+					} else if position[0] < 100 {
+						return []int{-1, position[0] + 100}, 0 // B
+					} else if position[0] < 150 {
+						return []int{position[0] - 100, 200}, 3 // C
+					}
 				} else if f[1] > 0 {
-					position[1] = -1
+					if position[0] < 50 {
+						return []int{position[0] + 100, -1}, 1 // C
+					} else if position[0] < 100 {
+						return []int{50, position[0] + 100}, 2 // D
+					} else if position[0] < 150 {
+						return []int{100, position[0] - 50}, 2 // E
+					}
 				}
 			} else {
 				if f[0] < 0 {
-					position[0] = len(board[position[1]])
+					if position[1] < 50 {
+						return []int{-1, 149 - position[1]}, 0 // F
+					} else if position[1] < 100 {
+						return []int{position[1] - 50, 99}, 1 // A
+					} else if position[1] < 150 {
+						return []int{50, 149 - position[1]}, 0 // F
+					} else if position[1] < 200 {
+						return []int{position[1] - 100, -1}, 1 // B
+					}
 				} else if f[0] > 0 {
-					position[0] = -1
+					if position[1] < 50 {
+						return []int{100, 149 - position[1]}, 2 // G
+					} else if position[1] < 100 {
+						return []int{position[1] + 50, 50}, 3 // E
+					} else if position[1] < 150 {
+						return []int{150, 149 - position[1]}, 2 // G
+					} else if position[1] < 200 {
+						return []int{position[1] - 100, 150}, 3 // D
+					}
 				}
 			}
+			// fmt.Println(position, f, rowWrap)
+			// panic("todo")
 			return position, facing
 		})
 		score := (1000 * (position[1] + 1)) + (4 * (position[0] + 1)) + facing
@@ -153,7 +195,7 @@ func _22() {
 	}
 
 	part1()
-	part2()
+	part2() // 134228-197055
 
 	fmt.Println("done")
 }
