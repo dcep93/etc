@@ -86,20 +86,26 @@ func _24() {
 				for i, x := range d {
 					ss[i] += x
 				}
-				if ss[0] == 0 || ss[0] == width-1 {
-					continue
-				}
-				if ss[1] <= 0 {
-					if ss[0] != start || ss[1] != 0 {
-						continue
+				if ss[0] == start && ss[1] == 0 {
+					if len(ss) == 3 {
+						ss = append(ss, steps)
 					}
-				}
-				if ss[1] == height-1 {
-					if ss[0] == target {
-						fmt.Println(steps)
+				} else if ss[0] == target && ss[1] == height-1 {
+					if len(ss) == 2 {
+						ss = append(ss, steps)
+					}
+					if len(ss) == 4 {
+						ss = append(ss, steps)
+						fmt.Println(steps, ss)
 						return
 					}
-					continue
+				} else {
+					if ss[0] == 0 || ss[0] == width-1 {
+						continue
+					}
+					if ss[1] == 0 || ss[1] == height-1 {
+						continue
+					}
 				}
 				key := v(ss)
 				if seen[key] {
