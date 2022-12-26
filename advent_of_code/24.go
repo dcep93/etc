@@ -93,6 +93,8 @@ func _24() {
 				} else if ss[0] == target && ss[1] == height-1 {
 					if len(ss) == 2 {
 						ss = append(ss, steps)
+						// fmt.Println(steps, ss)
+						// return
 					}
 					if len(ss) == 4 {
 						ss = append(ss, steps)
@@ -100,10 +102,10 @@ func _24() {
 						return
 					}
 				} else {
-					if ss[0] == 0 || ss[0] == width-1 {
+					if ss[0] <= 0 || ss[0] >= width-1 {
 						continue
 					}
-					if ss[1] == 0 || ss[1] == height-1 {
+					if ss[1] <= 0 || ss[1] >= height-1 {
 						continue
 					}
 				}
