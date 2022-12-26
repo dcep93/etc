@@ -107,8 +107,12 @@ func _24() {
 						continue
 					}
 				}
-				key := v(ss)
+				key := v([]int{ss[0], ss[1]})
 				if seen[key] {
+					continue
+				}
+				nss := nextSearch[key]
+				if len(nss) > len(ss) {
 					continue
 				}
 				nextSearch[key] = ss
