@@ -1,16 +1,26 @@
 {
-    "name": "Generic_Extension",
-    "description": "dcep93 hacks",
-    "version": "0.0.1",
-    "content_scripts": [{
-        "matches": ["<all_urls>"],
-        "js": ["typescriptServices.js", "index.js"],
-        "all_frames": true
-    }],
-
-    "web_accessible_resources": [{
-        "resources": ["extensions/*"],
-        "matches": ["<all_urls>"]
-    }],
-    "manifest_version": 3
+  "name": "Generic_Extension",
+  "description": "dcep93 hacks",
+  "version": "0.0.1",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "externally_connectable": {
+    "matches": ["<all_urls>"],
+    "accept_tls_channel_id": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["typescriptServices.js", "index.js"],
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["extensions/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "manifest_version": 3
 }
