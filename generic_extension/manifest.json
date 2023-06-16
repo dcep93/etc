@@ -22,5 +22,6 @@
       "matches": ["<all_urls>"]
     }
   ],
+  "permissions": ["storage", "unlimitedStorage"],
   "manifest_version": 3
 }
