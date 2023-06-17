@@ -32,19 +32,21 @@ function execute(request) {
       const now = Date.now();
       if (now - cached?.timestamp < request.fetch.maxAgeMs)
         return resolve(cached.cache);
-      return fetch(request.fetch.url, request.fetch.options).then((resp) => {
-        if (!resp.ok)
-          return resp.text().then((err) => resolve({ err, ...resp }));
-        (request.fetch.json ? resp.json() : resp.text())
-          .then((msg) => ({ msg, ok: true }))
-          .then((cache) => {
-            if (!request.fetch.noCache) {
-              fetch_cache[key] = { timestamp: now, cache };
-            }
-            return cache;
-          })
-          .then(resolve);
-      });
+      return fetch(request.fetch.url, request.fetch.options)
+        .then((resp) => {
+          if (!resp.ok)
+            return resp.text().then((err) => resolve({ err, ...resp }));
+          (request.fetch.json ? resp.json() : resp.text())
+            .then((msg) => ({ msg, ok: true }))
+            .then((cache) => {
+              if (!request.fetch.noCache) {
+                fetch_cache[key] = { timestamp: now, cache };
+              }
+              return cache;
+            })
+            .then(resolve);
+        })
+        .catch(reject);
     }
   });
 }
