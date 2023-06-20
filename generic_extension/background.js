@@ -8,7 +8,7 @@ chrome.runtime.onMessageExternal.addListener(function (
   sendResponse
 ) {
   return execute(request)
-    .then((result) => sendResponse(result))
+    .then((data) => sendResponse({ ok: true, data }))
     .catch((err) => sendResponse({ ok: false, err: err.message }));
 });
 
@@ -16,7 +16,6 @@ function execute(request) {
   return new Promise((resolve, reject) => {
     if (request.storage) {
       if (request.storage.action === "get") {
-        console.log("get", request.storage.keys);
         chrome.storage.local.get(request.storage.keys, (result) =>
           resolve({ ok: true, result })
         );
@@ -25,8 +24,7 @@ function execute(request) {
         chrome.storage.local.set(request.storage.save, () =>
           resolve({ ok: true })
         );
-    }
-    if (request.fetch) {
+    } else if (request.fetch) {
       const key = request.fetch.url;
       const cached = fetch_cache[key];
       const now = Date.now();
@@ -47,6 +45,21 @@ function execute(request) {
             .then(resolve);
         })
         .catch(reject);
+    } else if (request.download) {
+      chrome.downloads.download(
+        {
+          url: URL.createObjectURL(
+            new Blob([JSON.stringify(request.download.data)], {
+              type: request.download.type,
+            })
+          ),
+          filename: request.download.name,
+          conflictAction: "overwrite",
+        },
+        ({ downloadId }) => resolve({ ok: Boolean(downloadId) })
+      );
+    } else {
+      reject(new Error("unrecognized command"));
     }
   });
 }
