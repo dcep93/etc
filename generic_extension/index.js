@@ -10,11 +10,19 @@ function execute() {
       ),
       jss: ["buildinglink_postings.js"],
     },
+    {
+      p: /https:\/\/www\.ticketmaster\.com.*/,
+      jss: ["ticketmaster.js"],
+    },
   ];
 
   const jss = paths
     .filter((o) => location.href.match(o.p))
     .flatMap((o) => o.jss);
+
+  if (jss.length > 0) {
+    console.log("generic_extension", jss);
+  }
 
   allPromises(jss.map((js) => () => fileToPromise(js))).catch(alert);
 }
