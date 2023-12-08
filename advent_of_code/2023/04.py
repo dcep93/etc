@@ -23,7 +23,6 @@ def part2():
         count = len([i for i in x[1].split(" ") if i in y and i])
         for j in range(count):
             deck[i+j+1] += deck[i]
-        print(i, deck)
-    print( sum(deck.values()))
+    print(sum(deck.values()))
 
 part2()
