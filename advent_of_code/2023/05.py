@@ -43,8 +43,6 @@ def part2():
         maps[source] = {"conversions": conversions, "target": target}
 
     def pipe(input_values, source):
-        # print(input_values, source)
-        # if source == "fertilizer": return
         if source == "location":
             return min([i[0] for i in input_values])
         info = maps[source]
@@ -53,19 +51,15 @@ def part2():
             to_converts = [i]
             for c_target_offset, c_source_offset, c_range in info["conversions"]:
                 c_ceiling = c_source_offset + c_range - 1
-                # print(56, c_source_offset)
                 next_to_converts = []
                 for source_floor, source_ceiling in to_converts:
                     if source_floor < c_source_offset:
                         next_to_converts += [[source_floor, min(source_ceiling, c_source_offset-1)]]
-                        # print(59, next_to_converts[-1])
                     if source_ceiling >= c_source_offset:
                         if source_floor < c_ceiling:
                             output_values += [[i + c_target_offset - c_source_offset for i in [max(c_source_offset, source_floor), min(source_ceiling, c_ceiling)]]]
-                            # print(63, output_values[-1])
                         if source_ceiling > c_ceiling:
                             next_to_converts += [[max(c_ceiling+1, source_floor), source_ceiling]]
-                            # print(65, next_to_converts[-1])
                 to_converts = next_to_converts
             output_values += to_converts
         return pipe(output_values, info["target"])
