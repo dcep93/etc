@@ -60,7 +60,6 @@ def getNonoverlapping(choices):
                 slots[k][vv] = True
     nonoverlapping = {}
     for i, c in enumerate(choices):
-        print(i, len(choices), c)
         for group in getGroups(c, slots, [()]):
             nonoverlapping[group] = True
     return nonoverlapping
