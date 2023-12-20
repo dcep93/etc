@@ -36,47 +36,48 @@ def getAnswer(isPart1: bool):
             s += sum(m.values())
     return s
 
-def getGroups(choice, slots, existing):
-    if not choice:
-        return existing
-    c = dict(choice)
-    k = min(c.keys())
-    v = c.pop(k)
-    groups = []
-    for vv in sorted(slots[k].keys()):
-        if vv <= v[0]:
-            continue
-        groups += getGroups(c, slots, [((v[0], vv),) + e for e in existing])
-        if vv == v[1]:
-            break
-        v = (vv+1, v[1])
-    return groups
+def getOverlapping(k, c):
+    o = ()
+    for a,b in k:
+        r = (max(b[0], c[a][0]), min(b[1], c[a][1]))
+        if r[1] < r[0]:
+            return None
+        o += ((a, r),)
+    return o
 
 def getNonoverlapping(choices):
-    slots = collections.defaultdict(lambda: {})
-    for c in choices:
-        for k,v in c.items():
-            for vv in v:
-                slots[k][vv] = True
-    nonoverlapping = {}
+    nonoverlapping = collections.defaultdict(int)
     for i, c in enumerate(choices):
-        for group in getGroups(c, slots, [()]):
-            nonoverlapping[group] = True
-    return nonoverlapping
+        cc = tuple((a, c[a]) for a in sorted(c.keys()))
+        overlaps = collections.defaultdict(int)
+        for k in nonoverlapping:
+            o = getOverlapping(k, c)
+            if o is not None:
+                overlaps[o] += nonoverlapping[k]
+        if cc in overlaps:
+            continue
+        for o in overlaps.keys():
+            if overlaps[o] != 0:
+                nonoverlapping[o] -= overlaps[o]
+            if nonoverlapping[o] == 0:
+                del nonoverlapping[o]
+        if cc in nonoverlapping:
+            raise
+        nonoverlapping[cc] = 1
 
-def getNumPossibilities(c):
-    x = 1
-    for a,b in c:
-        x *= 1 + b - a
-    return x
+    return nonoverlapping
 
 def getAnswer2(ws):
     choices = getChoices('in', ws, {i: (1, 4000) for i in 'xmas'})
     nonoverlapping = getNonoverlapping(choices)
     s = 0
     for c in nonoverlapping.keys():
-        ss = getNumPossibilities(c)
-        s += ss
+        ss = 1
+        for a,b in [cc[1] for cc in c]:
+            ss *= 1 + b - a
+        s += ss * nonoverlapping[c]
+        # print(ss, nonoverlapping[c], c)
+    # print(nonoverlapping)
     return s
 
 def getChoices(w, ws, m):
