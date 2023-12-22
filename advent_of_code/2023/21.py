@@ -53,7 +53,7 @@ def getAnswer(isPart1: bool):
             return None
         return get(s, v[p], isPart1)
         
-    steps = 8*len(lines)+1 # 26501365
+    steps = 8*len(lines)+3 # 26501365
     start = getPosition()
     spots = [start]
     seen = {start: True}
@@ -82,10 +82,10 @@ def getAnswer(isPart1: bool):
         if counts[3] > 0:
             raise
         s_old = counts[1] * scale * scale
-        s_new = (counts[0] - counts[1]) * scale + (corners * (scale - 1))
+        s_new = (counts[0] - counts[1]) * scale - (corners * (scale - 1))
         total = s_old + s_new
         print('t', scale, corners, 'total', total, s_old, s_new)
-        # [1412, 314, 152, 0] -> 1412/1408
+        # 
         return total
         # 606822764898251 too low
         # 615479116147000 too high
