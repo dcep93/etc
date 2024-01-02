@@ -6,11 +6,11 @@ with open(f'{__file__.split("/")[-1].split(".py")[0]}.txt') as fh:
     txt = fh.read()
 lines = [list(line) for line in txt.split("\n")]
 
-# for i in range(50):
-#     lines[i] = list(lines[0])
-#     lines[-i-1] = list(lines[0])
-# for _ in range(0):
-#     lines = [l[1:-1] for l in lines[1:-1]]
+for i in range(50):
+    lines[i] = list(lines[0])
+    lines[-i-1] = list(lines[0])
+for _ in range(0):
+    lines = [l[1:-1] for l in lines[1:-1]]
 
 # lines = '''
 # #.....#..
@@ -25,9 +25,9 @@ lines = [list(line) for line in txt.split("\n")]
 # '''.strip().split("\n")
 
 
-# l = ['.' for _ in range(5)]
-# lines = [list(l) for _ in range(len(l))]
-# lines[len(l)//2] = ['.' if i != len(l)//2 else 'S' for i in range(len(l))]
+l = ['.' for _ in range(5)]
+lines = [list(l) for _ in range(len(l))]
+lines[len(l)//2] = ['.' if i != len(l)//2 else 'S' for i in range(len(l))]
 
 # lines[1][1] = '#'
 # lines[0][0] = '#'
@@ -72,6 +72,7 @@ def getAnswer(isPart1: bool):
         return next_spots
 
     def scaleSpots():
+        print("scaleSpots")
         import math
         lcm = 1
         for iii in targets.values():
@@ -86,10 +87,31 @@ def getAnswer(isPart1: bool):
                 if (char == '#') == (i, j) in seen:
                     raise
 
-        factor = lcm // 2
+
+        factor = lcm // 5
         radius = factor // 2
         scale = steps // factor
         remainder = (steps - (scale * factor))
+
+        r = False
+        print(radius)
+        for i in range(radius):
+            vs = [memo[i + radius * j] - memo[i-1 + radius * j] for j in range(5)]
+            base = memo[i] - memo[i-1]
+            v1 = memo[i+radius]-memo[i+radius-1]
+            v2 = memo[i+2*radius]-memo[i+2*radius-1]
+            v3 = memo[i+3*radius]-memo[i+3*radius-1]
+            v4 = memo[i+4*radius]-memo[i+4*radius-1]
+            d1 = v1 - base
+            d2 = v2 - v1
+            if d1 != d2:
+                r = True
+                print(i, base, vs)
+                print(max(memo), radius, steps, len(lines))
+                # raise
+        if r:
+            raise
+        
 
         extracted = [(memo[i]-memo[i-1], memo[i+radius]-memo[i+radius-1], scale + (0 if remainder >= i else -1), (remainder-i) % radius) for i in range(radius)]
         x = [radius * count * (base + (diff * (count - 1) // 2)) + (extra * (base + (diff * (count*+1)))) for base, diff, count, extra in extracted]
@@ -98,9 +120,11 @@ def getAnswer(isPart1: bool):
         # 606822764898251 too low
         # 615479116147000 too high
 
-    steps = 10*len(lines)+11
+    steps = 12*len(lines)+3
+    if isPart1 and steps > 100000:
+        raise
     start = getPosition()
-    targets = {tuple(start[i] + 4*nn[i] for i in range(len(start))): False for nn in [
+    targets = {tuple(start[i] + 8*nn[i] for i in range(len(start))): False for nn in [
         (len(lines), 0),
         (-len(lines), 0),
         (0, len(lines[0])),
@@ -125,7 +149,7 @@ def getAnswer(isPart1: bool):
         if ii >= steps:
             break
 
-        if isPart1 and all(targets.values()):
+        if not isPart1 and all(targets.values()):
             return scaleSpots()
 
         if not spots:
@@ -138,5 +162,5 @@ def getAnswer(isPart1: bool):
 
     return total
 
-print(getAnswer(True))
+# print(getAnswer(True))
 print(getAnswer(False))
