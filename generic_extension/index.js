@@ -14,6 +14,10 @@ function execute() {
       p: /https:\/\/www\.ticketmaster\.com.*/,
       jss: ["ticketmaster.js"],
     },
+    {
+      p: /https:\/\/www\.seedr\.cc\/files.*/,
+      jss: ["seedr.js"],
+    },
   ];
 
   const jss = paths
