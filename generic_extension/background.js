@@ -31,19 +31,19 @@ function execute(request) {
       if (now - cached?.timestamp < request.fetch.maxAgeMs)
         return resolve(cached.cache);
       return fetch(request.fetch.url, request.fetch.options)
-        .then((resp) => {
-          if (!resp.ok)
-            return resp.text().then((err) => resolve({ err, ...resp }));
-          (request.fetch.json ? resp.json() : resp.text())
-            .then((msg) => ({ msg, ok: true }))
-            .then((cache) => {
-              if (!request.fetch.noCache) {
-                fetch_cache[key] = { timestamp: now, cache };
-              }
-              return cache;
-            })
-            .then(resolve);
-        })
+        .then((resp) =>
+          !resp.ok
+            ? resp.text().then((err) => resolve({ err, ...resp }))
+            : (request.fetch.json ? resp.json() : resp.text())
+                .then((msg) => ({ msg, ok: true }))
+                .then((cache) => {
+                  if (!request.fetch.noCache) {
+                    fetch_cache[key] = { timestamp: now, cache };
+                  }
+                  return cache;
+                })
+                .then(resolve)
+        )
         .catch(reject);
     } else if (request.download) {
       chrome.downloads.download(
@@ -61,5 +61,5 @@ function execute(request) {
     } else {
       reject(new Error("unrecognized command"));
     }
-  });
+  }).catch((err) => ({ err: err.toString() }));
 }
