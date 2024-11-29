@@ -4,7 +4,7 @@ setInterval(() => {
       "Tickets are sold out now. Check back soon."
     )
   ) {
-    document.body.innerHTML = "reloading...";
+    document.body.innerHTML = "ticketmaster.js reloading...";
     setTimeout(() => location.reload(), 3000);
   }
 });
