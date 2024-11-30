@@ -1,24 +1,6 @@
 ({
   init: function (elevators, floors) {
-    console.clear();
-    console.log("init");
-    window.now = 0;
-    const requests = {};
-    const requestFloors = Object.fromEntries(
-      floors.map((floor) => [floor.floorNum(), {}])
-    );
     function requestScore(obj, floorObj) {
-      const route = obj.floorNums.concat(obj.elevator.currentFloor());
-      const detour = Math.min(
-        ...route
-          .map((floorNum) => Math.abs(floorNum - floorObj.floorNum))
-          .concat(
-            Math.max(route) >= floorObj.floorNum &&
-              Math.min(route) <= floorObj.floorNum
-              ? 0
-              : Number.POSITIVE_INFINITY
-          )
-      );
       const currDist = Math.abs(
         obj.elevator.currentFloor() - floorObj.floorNum
       );
@@ -30,14 +12,13 @@
 
         currDist === 0 ? 100 : 0,
         -20 * currDist,
-        -10 * detour,
+        // todo floorObj.direction
       ].reduce((a, b) => a + b);
       console.log("requestScore", {
         e: obj.e,
         ef: obj.elevator.currentFloor(),
-        detour,
-        xlf: obj.elevator.loadFactor(),
         floorNum: floorObj.floorNum,
+        lf: obj.elevator.loadFactor(),
         rval,
       });
       return rval;
@@ -52,98 +33,56 @@
           (floorNum) => floorNum >= obj.elevator.currentFloor()
         ),
       ];
-      const directionScores = segments.map((segment) =>
-        [
-          obj.elevator.currentFloor() === segment[0] ? 10 : 0,
-          -1 * Math.abs(obj.elevator.currentFloor() - segment[0]),
-          1 *
-            Math.min(
-              ...segment
-                .map((floorNum) => elevatorButtons[obj.e][floorNum])
-                .filter((n) => n)
-                .concat(now)
-                .map((t) => now - t)
-            ),
-          1 *
-            Math.min(
-              ...segment
-                .map((floorNum) => requestFloors[floorNum].need_elevator)
-                .filter((n) => n)
-                .concat(now)
-                .map((t) => now - t)
-            ),
-        ].reduce((a, b) => a + b)
+      const directionData = segments.map((segment) => [
+        obj.elevator.currentFloor() === segment[0] ? 10 : 0,
+        -1 * Math.abs(obj.elevator.currentFloor() - segment[0]),
+        0 *
+          Math.min(
+            ...segment
+              .map((floorNum) => elevatorData[obj.e][floorNum].boarded)
+              .filter((n) => n)
+              .concat(now)
+              .map((t) => now - t)
+          ),
+        0 *
+          Math.min(
+            ...segment
+              .map((floorNum) => floorData[floorNum].need_elevator)
+              .filter((n) => n)
+              .concat(now)
+              .map((t) => now - t)
+          ),
+      ]);
+      const directionScores = directionData.map((d) =>
+        d.reduce((a, b) => a + b)
       );
-      if (segments[0].length * segments[1].length > 0) {
-        console.log(
-          now,
-          JSON.stringify(segments),
-          directionScores,
-          obj.e,
-          obj.elevator.currentFloor(),
-          segments.map((segment) => [
-            obj.elevator.currentFloor() === segment[0] ? 10 : 0,
-            -1 * Math.abs(obj.elevator.currentFloor() - segment[0]),
-            1 *
-              Math.min(
-                ...segment
-                  .map((floorNum) => elevatorButtons[obj.e][floorNum])
-                  .filter((n) => n)
-                  .concat(now)
-                  .map((t) => now - t)
-              ),
-            1 *
-              Math.min(
-                ...segment
-                  .map((floorNum) => requestFloors[floorNum].need_elevator)
-                  .filter((n) => n)
-                  .concat(now)
-                  .map((t) => now - t)
-              ),
-          ])
-        );
-        if (!confirm("x")) asdf;
-      }
       if (directionScores[1] > directionScores[0]) {
         segments.reverse();
       }
-      if (true) {
-        console.log("getDestinations", {
-          e: obj.e,
-          c: obj.elevator.currentFloor(),
-          segments,
-          directionScores,
-          requests: Object.values(requests).map((obj) => obj.floorNum),
-        });
-      }
+      console.log("getDestinations", {
+        e: obj.e,
+        c: obj.elevator.currentFloor(),
+        segments,
+        directionScores,
+        directionData,
+      });
       return segments.flatMap((segment) => segment);
     }
+    //
+    window.scrollTo(0, 0);
+    console.clear();
+    console.log("init");
+    window.now = 0;
+    const elevatorData = elevators.map(() => ({}));
+    const floorData = floors.map(() => ({ up: {}, down: {} }));
     function recompute() {
-      console.log("recompute", {
-        requestFloors: Object.fromEntries(
-          Object.entries(requestFloors).map(([f, o]) => [
-            f,
-            Object.fromEntries(Object.entries(o).map(([k, v]) => [k, now - v])),
-          ])
-        ),
-        elevatorButtons: Object.fromEntries(
-          Object.entries(elevatorButtons).map(([f, o]) => [
-            f,
-            Object.fromEntries(Object.entries(o).map(([k, v]) => [k, now - v])),
-          ])
-        ),
-      });
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
         elevator,
         floorNums: elevator.getPressedFloors(),
       }));
-      Array.from(new Set(Object.values(requests)))
-        .map((obj) => ({
-          ...obj,
-          est: obj.floorNum + obj.direction === "up" ? 0.5 : -0.5,
-        }))
-        .sort((a, b) => a.est - b.est)
+      Array.from(new Set(Object.values(requests))) // todo
+        .sort((a, b) => a.floorNum - b.floorNum)
         .map((floorObj) => ({
           floorNum: floorObj.floorNum,
           elevatorFloors: elevatorRequests
@@ -163,22 +102,27 @@
         .filter(({ floorNums }) => floorNums.length > 0)
         .map((obj) => {
           obj.elevator.stop();
-          getDestinations(obj).map((floorNum) =>
-            obj.elevator.goToFloor(floorNum)
-          );
+          const destinations = getDestinations(obj);
+          const isUp =
+            destinations
+              .map((d) => d - obj.elevator.currentFloor())
+              .find((d) => d !== 0) > 0;
+          obj.elevator.goingDownIndicator(!isUp);
+          obj.elevator.goingUpIndicator(isUp);
+          destinations.map((floorNum) => obj.elevator.goToFloor(floorNum));
         });
     }
-    //
     function request(floor, direction) {
       const floorNum = floor.floorNum();
-      if (!requestFloors[floorNum].need_elevator) {
-        requestFloors[floorNum].need_elevator = now;
+      if (!floorData[floorNum].need_elevator) {
+        floorData[floorNum].need_elevator = now;
       }
-      requests[Math.random()] = { floorNum, direction };
       recompute();
     }
-    function elevatorFloor(elevator, floorNum, isStopping) {
+    function elevatorFloor(e, floorNum, isStopping) {
       if (isStopping) {
+        delete elevatorData[e][floorNum];
+        floorData[floorNum].need_floor = floorData[floorNum].need_elevator;
         Object.entries(requests)
           .map(([key, obj]) => ({ key, obj }))
           .filter(({ obj }) => obj.floorNum === floorNum)
@@ -187,19 +131,8 @@
           });
         recompute();
       }
-      if (elevator.destinationDirection() === "up") {
-        elevator.goingDownIndicator(false);
-        elevator.goingUpIndicator(true);
-      } else if (elevator.destinationDirection() === "down") {
-        elevator.goingDownIndicator(true);
-        elevator.goingUpIndicator(false);
-      } else {
-        elevator.goingDownIndicator(true);
-        elevator.goingUpIndicator(true);
-      }
     }
     const floorsPerElevator = (floors.length - 1) / elevators.length;
-    const elevatorButtons = elevators.map(() => ({}));
     elevators.map((elevator, e) => {
       elevator.on("idle", () =>
         elevator.goToFloor(
@@ -208,20 +141,19 @@
       );
 
       elevator.on("floor_button_pressed", function (floorNum) {
-        elevatorButtons[e][floorNum] =
-          requestFloors[elevator.currentFloor()].need_floor;
+        elevatorData[e][floorNum] = {
+          boarded: now,
+          requested: floorData[elevator.currentFloor()].need_floor,
+        };
         recompute();
       });
 
       elevator.on("stopped_at_floor", function (floorNum) {
-        delete elevatorButtons[e][floorNum];
-        requestFloors[floorNum].need_floor =
-          requestFloors[floorNum].need_elevator;
-        elevatorFloor(elevator, floorNum, true);
+        elevatorFloor(e, floorNum, true);
       });
 
       elevator.on("passing_floor", function (floorNum) {
-        elevatorFloor(elevator, floorNum, false);
+        elevatorFloor(e, floorNum, false);
       });
     });
 
