@@ -76,7 +76,7 @@
     console.log("init");
     window.now = 0;
     const elevatorData = elevators.map(() => ({ buttons: {} }));
-    const floorData = floors.map(() => ({ up: {}, down: {} }));
+    const floorData = floors.map(() => ({}));
     function recompute() {
       console.log("recompute", { elevatorData, floorData });
       const elevatorRequests = elevators.map((elevator, e) => ({
@@ -88,7 +88,6 @@
         .flatMap((f, floorNum) =>
           Object.entries(f)
             .map(([direction, ff]) => ({ direction, ff }))
-            .filter(({ ff }) => ff.need_elevator !== undefined)
             .map(({ direction, ff }) => ({ floorNum, direction, ff }))
         )
         .sort((a, b) => a.floorNum - b.floorNum)
@@ -96,7 +95,9 @@
           floorNum: floorObj.floorNum,
           elevatorFloors: elevatorRequests
             .filter(
-              (obj) => elevatorData[obj.e].direction === floorObj.direction
+              (obj) =>
+                !elevatorData[obj.e].direction ||
+                elevatorData[obj.e].direction === floorObj.direction
             )
             .map((obj) => ({
               ...obj,
@@ -119,8 +120,7 @@
           const isUp =
             destinations
               .map((d) => d - obj.elevator.currentFloor())
-              .concat(obj.elevator.currentFloor() === 0 ? 1 : 0)
-              .find((d) => d !== 0) > 0;
+              .find((d) => d !== 0) >= 0;
           elevatorData[obj.e].direction = isUp ? "up" : "down";
           obj.elevator.goingDownIndicator(!isUp);
           obj.elevator.goingUpIndicator(isUp);
@@ -147,11 +147,13 @@
     }
     const floorsPerElevator = (floors.length - 1) / elevators.length;
     elevators.map((elevator, e) => {
-      elevator.on("idle", () =>
+      elevator.on("idle", () => {
         elevator.goToFloor(
           floors[Math.floor((e + 0.5) * floorsPerElevator)].floorNum()
-        )
-      );
+        );
+        elevator.goingDownIndicator(false);
+        elevator.goingUpIndicator(false);
+      });
 
       elevator.on("floor_button_pressed", function (floorNum) {
         elevatorData[e].buttons[floorNum] = {
