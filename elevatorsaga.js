@@ -40,7 +40,7 @@
           Math.min(
             0,
             ...segment
-              .map((floorNum) => elevatorData[obj.e].buttons[floorNum].boarded)
+              .map((floorNum) => elevatorData[obj.e].buttons[floorNum]?.boarded)
               .filter((n) => n)
               .map((t) => now - t)
           ),
@@ -51,7 +51,7 @@
               .map(
                 (floorNum) =>
                   floorData[floorNum][elevatorData[obj.e].direction]
-                    .need_elevator
+                    ?.need_elevator
               )
               .filter((n) => n)
               .map((t) => now - t)
@@ -80,6 +80,7 @@
     const elevatorData = elevators.map(() => ({ buttons: {} }));
     const floorData = floors.map(() => ({ up: {}, down: {} }));
     function recompute() {
+      console.log("recompute", { elevatorData, floorData });
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
         elevator,
