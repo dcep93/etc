@@ -38,18 +38,22 @@
         -1 * Math.abs(obj.elevator.currentFloor() - segment[0]),
         0 *
           Math.min(
+            0,
             ...segment
-              .map((floorNum) => elevatorData[obj.e][floorNum].boarded)
+              .map((floorNum) => elevatorData[obj.e].buttons[floorNum].boarded)
               .filter((n) => n)
-              .concat(now)
               .map((t) => now - t)
           ),
         0 *
           Math.min(
+            0,
             ...segment
-              .map((floorNum) => floorData[floorNum].need_elevator)
+              .map(
+                (floorNum) =>
+                  floorData[floorNum][elevatorData[obj.e].direction]
+                    .need_elevator
+              )
               .filter((n) => n)
-              .concat(now)
               .map((t) => now - t)
           ),
       ]);
@@ -73,7 +77,7 @@
     console.clear();
     console.log("init");
     window.now = 0;
-    const elevatorData = elevators.map(() => ({}));
+    const elevatorData = elevators.map(() => ({ buttons: {} }));
     const floorData = floors.map(() => ({ up: {}, down: {} }));
     function recompute() {
       const elevatorRequests = elevators.map((elevator, e) => ({
@@ -81,7 +85,14 @@
         elevator,
         floorNums: elevator.getPressedFloors(),
       }));
-      Array.from(new Set(Object.values(requests))) // todo
+      floorData
+        .flatMap(
+          (f, floorNum) =>
+            Object.entries(f)
+              .map(([direction, ff]) => ({ direction, ff }))
+              .filter(({ ff }) => ff.need_elevator !== undefined)
+              .map(({ direction, ff }) => ({ floorNum, direction, ff })) // todo
+        )
         .sort((a, b) => a.floorNum - b.floorNum)
         .map((floorObj) => ({
           floorNum: floorObj.floorNum,
@@ -107,6 +118,7 @@
             destinations
               .map((d) => d - obj.elevator.currentFloor())
               .find((d) => d !== 0) > 0;
+          elevatorData[obj.e].direction = isUp ? "up" : "down";
           obj.elevator.goingDownIndicator(!isUp);
           obj.elevator.goingUpIndicator(isUp);
           destinations.map((floorNum) => obj.elevator.goToFloor(floorNum));
@@ -114,21 +126,19 @@
     }
     function request(floor, direction) {
       const floorNum = floor.floorNum();
-      if (!floorData[floorNum].need_elevator) {
-        floorData[floorNum].need_elevator = now;
+      if (!floorData[floorNum][direction].need_elevator) {
+        floorData[floorNum][direction].need_elevator = now;
       }
       recompute();
     }
     function elevatorFloor(e, floorNum, isStopping) {
       if (isStopping) {
-        delete elevatorData[e][floorNum];
-        floorData[floorNum].need_floor = floorData[floorNum].need_elevator;
-        Object.entries(requests)
-          .map(([key, obj]) => ({ key, obj }))
-          .filter(({ obj }) => obj.floorNum === floorNum)
-          .map(({ key }) => {
-            delete requests[key];
-          });
+        if (floorData[floorNum][elevatorData[e].direction]?.need_elevator) {
+          delete elevatorData[e].buttons[floorNum];
+          floorData[floorNum].need_floor =
+            floorData[floorNum][elevatorData[e].direction].need_elevator;
+          delete floorData[floorNum][elevatorData[e].direction].need_elevator;
+        }
         recompute();
       }
     }
@@ -141,9 +151,11 @@
       );
 
       elevator.on("floor_button_pressed", function (floorNum) {
-        elevatorData[e][floorNum] = {
+        elevatorData[e].buttons[floorNum] = {
           boarded: now,
-          requested: floorData[elevator.currentFloor()].need_floor,
+          requested:
+            floorData[elevator.currentFloor()][elevatorData[e].direction]
+              .need_floor,
         };
         recompute();
       });
