@@ -84,6 +84,7 @@
         elevatorRequests,
       };
       console.log("recompute", x);
+      // todo
       floorData
         .flatMap((f, floorNum) =>
           Object.entries(f)
@@ -177,26 +178,12 @@
       }
       recompute();
     }
-    function assignDirection(e) {
+    function setDirectionAndLights(e) {
       // todo
-      const destinationQueue = elevators[e].destinationQueue.filter(
-        (f) => f !== elevators[e].currentFloor()
-      );
-      elevatorData[e].direction =
-        destinationQueue.length === 0
-          ? ["up", "down"].find(
-              (direction) =>
-                floorData[elevators[e].currentFloor()][direction]
-                  .need_elevator !== undefined
-            )
-          : destinationQueue[0] > elevators[e].currentFloor()
-          ? "up"
-          : "down";
 
-      if (elevatorData[e].direction !== undefined) {
-        const isUp = elevatorData[e].direction === "up";
-        elevators[e].goingDownIndicator(!isUp);
-        elevators[e].goingUpIndicator(isUp);
+      function syncDirection(e) {
+        elevators[e].goingDownIndicator(elevatorData[e].direction === "up");
+        elevators[e].goingUpIndicator(elevatorData[e].direction === "down");
       }
     }
     function elevatorFloor(e, floorNum, isStopping) {
@@ -210,10 +197,6 @@
         recompute();
       }
     }
-    function syncDirection(e) {
-      elevators[e].goingDownIndicator(elevatorData[e].direction === "up");
-      elevators[e].goingUpIndicator(elevatorData[e].direction === "down");
-    }
     const floorsPerElevator = (floors.length - 1) / elevators.length;
     elevators.map((elevator, e) => {
       elevator.on("idle", () => {
@@ -221,7 +204,7 @@
           floors[Math.floor((e + 0.5) * floorsPerElevator)].floorNum()
         );
         delete elevatorData[e].direction;
-        syncDirection(e);
+        setDirectionAndLights(e);
       });
 
       elevator.on("floor_button_pressed", function (floorNum) {
