@@ -1,42 +1,44 @@
 ({
   init: function (elevators, floors) {
+    // should this elevator go to this floor with this direction marker?
     function requestScore(obj, floorObj) {
       const currDist = Math.abs(
         obj.elevator.currentFloor() - floorObj.floorNum
       );
+
+      // todo
+
+      //   .filter((obj) => obj.elevator.loadFactor() < 0.7)
+      //   .filter(
+      //     (obj) =>
+      //       !elevatorData[obj.e].direction ||
+      //       elevatorData[obj.e].direction === floorObj.direction
+      //   )
       const rval = [
         obj.elevator.loadFactor() > 0.9 ? -1000 : 0,
         obj.elevator.loadFactor() > 0.6 ? -100 : 0,
         obj.elevator.loadFactor() > 0.1 ? -50 : 0,
         -10 * obj.elevator.loadFactor(),
 
-        elevatorData[obj.e].direction === floorObj.direction ? 100 : 0,
+        obj.direction === floorObj.direction ? 100 : 0,
 
         currDist === 0 ? 100 : 0,
         -20 * currDist,
       ].reduce((a, b) => a + b);
-      console.log("requestScore", {
+      console.log("floor", {
         e: obj.e,
         ef: obj.elevator.currentFloor(),
         floorNum: floorObj.floorNum,
         lf: obj.elevator.loadFactor(),
-        direction: floorObj.direction,
+        eDirection: obj.direction,
+        floorDirection: floorObj.direction,
         edir: elevatorData[obj.e].direction,
         rval,
       });
       return rval;
     }
-    function getDestinations(obj) {
-      obj.floorNums.sort((a, b) => a - b);
-      const segments = [
-        obj.floorNums
-          .filter((floorNum) => floorNum < obj.elevator.currentFloor())
-          .reverse(),
-        obj.floorNums.filter(
-          (floorNum) => floorNum >= obj.elevator.currentFloor()
-        ),
-      ];
-      const directionData = segments.map((segment) => [
+    function getDirectionValue(segment, obj) {
+      return [
         obj.elevator.currentFloor() === segment[0] ? 10 : 0,
         -1 * Math.abs(obj.elevator.currentFloor() - segment[0]),
         0 *
@@ -59,21 +61,7 @@
               .filter((n) => n)
               .map((t) => now - t)
           ),
-      ]);
-      const directionScores = directionData.map((d) =>
-        d.reduce((a, b) => a + b)
-      );
-      if (directionScores[1] > directionScores[0]) {
-        segments.reverse();
-      }
-      console.log("getDestinations", {
-        e: obj.e,
-        c: obj.elevator.currentFloor(),
-        segments,
-        directionScores,
-        directionData,
-      });
-      return segments.flatMap((segment) => segment);
+      ];
     }
     //
     const initialSeed = Math.PI % 1;
@@ -102,14 +90,18 @@
       return obj;
     };
     window.now = 0;
+    // public
+    // {buttons: {[floorNum: number]: {boarded: number; pressed: number}}; direction?: "up" | "down"}[]
     const elevatorData = elevators.map(() => ({ buttons: {} }));
+    // {up: {need_floor?: number; need_elevator?: number}, down: {}}[]
     const floorData = floors.map(() => ({ up: {}, down: {} }));
-    function recompute(canRecurse = false) {
+    function recompute() {
+      // {e: number; direction: "up" | "down"; floorNums: number[]}[]
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
+        direction: elevatorData[e].direction,
         floorNums: elevator.getPressedFloors(),
       }));
-      elevators.map((_, e) => assignDirection(e));
       window.x = {
         elevators,
         floors,
@@ -129,40 +121,52 @@
         .map((floorObj) => ({
           floorNum: floorObj.floorNum,
           elevatorFloors: elevatorRequests
-            .filter((obj) => obj.elevator.loadFactor() < 0.7)
-            .filter(
-              (obj) =>
-                !elevatorData[obj.e].direction ||
-                elevatorData[obj.e].direction === floorObj.direction
-            )
             .map((obj) => ({
               ...obj,
               score: requestScore(obj, floorObj),
             }))
-            .sort((a, b) => b.score - a.score)[0]?.floorNums,
+            .sort((a, b) => b.score.value - a.score.value)[0]?.floorNums,
         }))
         .map(({ floorNum, elevatorFloors }) => {
           elevatorFloors &&
             !elevatorFloors.includes(floorNum) &&
             elevatorFloors.push(floorNum);
         });
-      var shouldRecurse = false;
       elevatorRequests
         .filter(({ floorNums }) => floorNums.length > 0)
         .map((obj) => {
           obj.elevator.stop();
-          getDestinations(obj).map((floorNum) =>
-            obj.elevator.goToFloor(floorNum)
+
+          obj.floorNums.sort((a, b) => a - b);
+          const segments = [
+            obj.floorNums
+              .filter((floorNum) => floorNum < obj.elevator.currentFloor())
+              .reverse(),
+            obj.floorNums.filter(
+              (floorNum) => floorNum >= obj.elevator.currentFloor()
+            ),
+          ];
+          const directionData = segments.map((segment) =>
+            getDirectionValue(segment, obj)
           );
-          const oldDirection = elevatorData[obj.e].direction;
-          assignDirection(obj.e);
-          if (canRecurse && elevatorData[obj.e].direction !== oldDirection) {
-            shouldRecurse = true;
+          const directionScores = directionData.map((d) =>
+            d.reduce((a, b) => a + b)
+          );
+          if (directionScores[1] > directionScores[0]) {
+            segments.reverse();
           }
+          console.log("elevator", {
+            e: obj.e,
+            c: obj.elevator.currentFloor(),
+            segments,
+            directionScores,
+            directionData,
+          });
+          segments
+            .flatMap((segment) => segment)
+            .map((floorNum) => obj.elevator.goToFloor(floorNum));
+          assignDirection(obj.e);
         });
-      if (shouldRecurse) {
-        recompute(false);
-      }
     }
     function request(floor, direction) {
       const floorNum = floor.floorNum();
@@ -172,6 +176,7 @@
       recompute();
     }
     function assignDirection(e) {
+      // todo
       const destinationQueue = elevators[e].destinationQueue.filter(
         (f) => f !== elevators[e].currentFloor()
       );
