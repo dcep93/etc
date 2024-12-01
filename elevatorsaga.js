@@ -1,6 +1,6 @@
 ({
   init: function (elevators, floors) {
-    // should this elevator go to this floor with this direction marker?
+    // should this elevator claim this floor with this direction marker?
     function requestScore(obj, floorObj) {
       const currDist = Math.abs(
         obj.elevator.currentFloor() - floorObj.floorNum
@@ -37,6 +37,7 @@
       });
       return rval;
     }
+    // given an elevator's queue, where should it go?
     function getDirectionValue(segment, obj) {
       return [
         obj.elevator.currentFloor() === segment[0] ? 10 : 0,
@@ -63,33 +64,6 @@
           ),
       ];
     }
-    //
-    const initialSeed = Math.PI % 1;
-    window.seed = initialSeed;
-    const randomSize = (1113 / 7) * 1000;
-    if (!window.originalRandom) window.originalRandom = _.random;
-    const h = (args) => {
-      const oldseed = seed;
-      seed = (seed * randomSize) % 1;
-      if (seed === oldseed) {
-        seed = initialSeed;
-      }
-      if (args === undefined) return seed;
-      return Math.floor(seed * (args + 1));
-    };
-    _.random = (args) => {
-      return h(args);
-    };
-    console.clear();
-    console.log("init");
-    var alerting = true;
-    window.alert = (obj) => {
-      if (!alerting || !confirm(JSON.stringify(obj))) {
-        alerting = false;
-      }
-      return obj;
-    };
-    window.now = 0;
     // public
     // {buttons: {[floorNum: number]: {boarded: number; pressed: number}}; direction?: "up" | "down"}[]
     const elevatorData = elevators.map(() => ({ buttons: {} }));
@@ -168,6 +142,34 @@
           assignDirection(obj.e);
         });
     }
+    // internal
+    const initialSeed = Math.PI % 1;
+    window.seed = initialSeed;
+    const randomSize = (1113 / 7) * 1000;
+    if (!window.originalRandom) window.originalRandom = _.random;
+    const h = (args) => {
+      const oldseed = seed;
+      seed = (seed * randomSize) % 1;
+      if (seed === oldseed) {
+        seed = initialSeed;
+      }
+      if (args === undefined) return seed;
+      return Math.floor(seed * (args + 1));
+    };
+    _.random = (args) => {
+      return h(args);
+    };
+    console.clear();
+    console.log("init");
+    var alerting = true;
+    window.alert = (obj) => {
+      if (!alerting || !confirm(JSON.stringify(obj))) {
+        alerting = false;
+      }
+      return obj;
+    };
+    window.now = 0;
+    //
     function request(floor, direction) {
       const floorNum = floor.floorNum();
       if (!floorData[floorNum][direction].need_elevator) {
@@ -199,15 +201,18 @@
     }
     function elevatorFloor(e, floorNum, isStopping) {
       if (isStopping) {
-        recompute();
-        if (floorNum === 0 && elevatorData[e].direction === "down") asdf;
         if (floorData[floorNum][elevatorData[e].direction]?.need_elevator) {
           delete elevatorData[e].buttons[floorNum];
           floorData[floorNum][elevatorData[e].direction].need_floor =
             floorData[floorNum][elevatorData[e].direction].need_elevator;
           delete floorData[floorNum][elevatorData[e].direction].need_elevator;
         }
+        recompute();
       }
+    }
+    function syncDirection(e) {
+      elevators[e].goingDownIndicator(elevatorData[e].direction === "up");
+      elevators[e].goingUpIndicator(elevatorData[e].direction === "down");
     }
     const floorsPerElevator = (floors.length - 1) / elevators.length;
     elevators.map((elevator, e) => {
@@ -216,8 +221,7 @@
           floors[Math.floor((e + 0.5) * floorsPerElevator)].floorNum()
         );
         delete elevatorData[e].direction;
-        elevator.goingDownIndicator(false);
-        elevator.goingUpIndicator(false);
+        syncDirection(e);
       });
 
       elevator.on("floor_button_pressed", function (floorNum) {
