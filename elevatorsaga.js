@@ -80,7 +80,7 @@
     window.seed = initialSeed;
     const randomSize = (1113 / 7) * 1000;
     if (!window.originalRandom) window.originalRandom = _.random;
-    window.h = (args) => {
+    const h = (args) => {
       const oldseed = seed;
       seed = (seed * randomSize) % 1;
       if (seed === oldseed) {
@@ -107,7 +107,6 @@
     function recompute(canRecurse = false) {
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
-        elevator,
         floorNums: elevator.getPressedFloors(),
       }));
       elevators.map((_, e) => assignDirection(e));
