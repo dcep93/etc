@@ -5,8 +5,10 @@
     function requestScore(obj, floorObj, shouldPivot) {
       if (
         shouldPivot &&
-        elevatorData[obj.e].direction ===
+        !(
+          elevatorData[obj.e].direction !==
           getDirection(floorObj.floorNum, obj.e, false)
+        )
       ) {
         return Number.NEGATIVE_INFINITY;
       }
@@ -106,68 +108,63 @@
         )
         .sort((a, b) => a.floorNum - b.floorNum)
         .map((floorObj) => {
-          const bestRequest = elevatorRequests.flatMap(
-            (obj) =>
-              [true, false]
-                .map((shouldPivot) => ({
-                  ...obj,
-                  shouldPivot,
-                  score: requestScore(obj, floorObj, shouldPivot),
-                }))
-                .sort((a, b) => b.score - a.score)[0]
-          );
+          const bestRequest = elevatorRequests
+            .flatMap((obj) =>
+              [true, false].map((shouldPivot) => ({
+                ...obj,
+                shouldPivot,
+                score: requestScore(obj, floorObj, shouldPivot),
+              }))
+            )
+            .sort((a, b) => b.score - a.score)[0];
           if (
             bestRequest.score > Number.NEGATIVE_INFINITY &&
             bestRequest?.floorNums &&
-            !bestRequest.floorNums.includes(floorNum)
+            !bestRequest.floorNums.includes(floorObj.floorNum)
           ) {
             if (bestRequest.shouldPivot) {
               getDirection(floorObj.floorNum, bestRequest.e, true);
             }
-            bestRequest.floorNums.push(floorNum);
+            bestRequest.floorNums.push(floorObj.floorNum);
           }
-          bestRequest?.floorNums &&
-            !bestRequest.floorNums.includes(floorNum) &&
-            bestRequest.floorNums.push(floorNum);
         });
-      elevatorRequests
-        .filter(({ floorNums }) => floorNums.length > 0)
-        .map((obj) => {
-          elevators[obj.e].stop();
-          obj.floorNums.sort((a, b) => a - b);
-          const segments = {
-            up: obj.floorNums.filter(
-              (floorNum) => floorNum > elevators[obj.e].currentFloor()
-            ),
-            down: obj.floorNums
-              .filter((floorNum) => floorNum < elevators[obj.e].currentFloor())
-              .reverse(),
-            [undefined]: obj.floorNums.filter(
-              (floorNum) => floorNum === elevators[obj.e].currentFloor()
-            ),
-          };
-          const directionData = Object.values(segments)
-            .map((segment) => ({
-              segment,
-              value: getDirectionValue(segment, obj),
-            }))
-            .map((dobj) => ({
-              ...dobj,
-              total: dobj.value.reduce((a, b) => a + b, 0),
-            }));
-          directionData
-            .sort((a, b) => b.total - a.total)
-            .flatMap((segment) => segment)
-            .map((floorNum) => elevators[obj.e].goToFloor(floorNum));
-          console.log("elevator", {
-            e: obj.e,
-            c: elevators[obj.e].currentFloor(),
-            queue: elevators[obj.e].destinationQueue,
-            directionScores,
-            directionData,
+      (function a() {
+        elevatorRequests
+          .filter(({ floorNums }) => floorNums.length > 0)
+          .map((obj) => {
+            elevators[obj.e].stop();
+            obj.floorNums.sort((a, b) => a - b);
+            const segments = {
+              up: obj.floorNums.filter(
+                (floorNum) => floorNum > elevators[obj.e].currentFloor()
+              ),
+              down: obj.floorNums
+                .filter(
+                  (floorNum) => floorNum < elevators[obj.e].currentFloor()
+                )
+                .reverse(),
+              [undefined]: obj.floorNums.filter(
+                (floorNum) => floorNum === elevators[obj.e].currentFloor()
+              ),
+            };
+            const directionData = Object.values(segments)
+              .map((segment) => ({
+                segment,
+                value: getDirectionValue(segment, obj),
+              }))
+              .map((dobj) => ({
+                ...dobj,
+                total: dobj.value.reduce((a, b) => a + b, 0),
+              }));
+            console.log("elevator", {
+              e: obj.e,
+              c: elevators[obj.e].currentFloor(),
+              queue: elevators[obj.e].destinationQueue,
+              directionData,
+            });
+            setDirectionAndLights(obj.e);
           });
-          setDirectionAndLights(obj.e);
-        });
+      })();
     }
     // internal
     const initialSeed = Math.PI % 1;
@@ -237,9 +234,6 @@
           delete floorData[floorNum][elevatorData[e].direction].need_elevator;
         }
         setDirectionAndLights(e);
-        // todo try it out
-        elevators[e].goingDownIndicator(false);
-        elevators[e].goingUpIndicator(false);
       }
     }
     const floorsPerElevator = (floors.length - 1) / elevators.length;
