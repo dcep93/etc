@@ -76,7 +76,22 @@
       return segments.flatMap((segment) => segment);
     }
     //
-    window.scrollTo(0, 0);
+    const initialSeed = Math.PI % 1;
+    window.seed = initialSeed;
+    const randomSize = (1113 / 7) * 1000;
+    if (!window.originalRandom) window.originalRandom = _.random;
+    window.h = (args) => {
+      const oldseed = seed;
+      seed = (seed * randomSize) % 1;
+      if (seed === oldseed) {
+        seed = initialSeed;
+      }
+      if (args === undefined) return seed;
+      return Math.floor(seed * (args + 1));
+    };
+    _.random = (args) => {
+      return h(args);
+    };
     console.clear();
     console.log("init");
     var alerting = true;
@@ -89,13 +104,21 @@
     window.now = 0;
     const elevatorData = elevators.map(() => ({ buttons: {} }));
     const floorData = floors.map(() => ({ up: {}, down: {} }));
-    function recompute(canRecurse = true) {
+    function recompute(canRecurse = false) {
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
         elevator,
         floorNums: elevator.getPressedFloors(),
       }));
-      console.log("recompute", { elevatorData, floorData, elevatorRequests });
+      elevators.map((_, e) => assignDirection(e));
+      window.x = {
+        elevators,
+        floors,
+        elevatorData,
+        floorData,
+        elevatorRequests,
+      };
+      console.log("recompute", x);
       floorData
         .flatMap((f, floorNum) =>
           Object.entries(f)
@@ -172,7 +195,6 @@
     }
     function elevatorFloor(e, floorNum, isStopping) {
       if (isStopping) {
-        assignDirection(e);
         recompute();
         if (floorNum === 0 && elevatorData[e].direction === "down") asdf;
         if (floorData[floorNum][elevatorData[e].direction]?.need_elevator) {
