@@ -217,7 +217,7 @@
     }
     function getDirection(destinationFloor, e, shouldUpdate) {
       const lift = destinationFloor - elevators[e].currentFloor();
-      if (lift === 0) {
+      if (lift === 0 || !lift) {
         return;
       }
       const direction = lift > 0 ? "up" : "down";
@@ -226,7 +226,7 @@
     }
     function setDirectionAndLights(e) {
       if (
-        elevators[e].maxPassengerCount() * (1 - elevators[e].loadFactor) >
+        elevators[e].maxPassengerCount() * (1 - elevators[e].loadFactor()) >
         3
       ) {
         elevators[e].goingDownIndicator(true);
