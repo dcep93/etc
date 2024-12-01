@@ -5,14 +5,15 @@
         obj.elevator.currentFloor() - floorObj.floorNum
       );
       const rval = [
-        obj.elevator.loadFactor() > 0.9 ? -10000 : 0,
+        obj.elevator.loadFactor() > 0.9 ? -1000 : 0,
         obj.elevator.loadFactor() > 0.6 ? -100 : 0,
         obj.elevator.loadFactor() > 0.1 ? -50 : 0,
         -10 * obj.elevator.loadFactor(),
 
+        elevatorData[obj.e].direction === floorObj.direction ? 100 : 0,
+
         currDist === 0 ? 100 : 0,
         -20 * currDist,
-        // todo floorObj.direction
       ].reduce((a, b) => a + b);
       console.log("requestScore", {
         e: obj.e,
@@ -49,7 +50,9 @@
             0,
             ...segment
               .map(
-                (floorNum) => floorData[floorNum][elevatorData[obj.e].direction]
+                (floorNum) =>
+                  floorData[floorNum][elevatorData[obj.e].direction]
+                    ?.need_elevator
               )
               .filter((n) => n)
               .map((t) => now - t)
@@ -74,9 +77,15 @@
     window.scrollTo(0, 0);
     console.clear();
     console.log("init");
+    var alerting = true;
+    window.alert = (msg) => {
+      if (!alerting || !confirm(JSON.stringify(msg))) {
+        alerting = false;
+      }
+    };
     window.now = 0;
     const elevatorData = elevators.map(() => ({ buttons: {} }));
-    const floorData = floors.map(() => ({}));
+    const floorData = floors.map(() => ({ up: {}, down: {} }));
     function recompute() {
       console.log("recompute", { elevatorData, floorData });
       const elevatorRequests = elevators.map((elevator, e) => ({
@@ -94,11 +103,6 @@
         .map((floorObj) => ({
           floorNum: floorObj.floorNum,
           elevatorFloors: elevatorRequests
-            .filter(
-              (obj) =>
-                !elevatorData[obj.e].direction ||
-                elevatorData[obj.e].direction === floorObj.direction
-            )
             .map((obj) => ({
               ...obj,
               score: requestScore(obj, floorObj),
@@ -116,31 +120,39 @@
         .filter(({ floorNums }) => floorNums.length > 0)
         .map((obj) => {
           obj.elevator.stop();
-          const destinations = getDestinations(obj);
-          const isUp =
-            destinations
-              .map((d) => d - obj.elevator.currentFloor())
-              .find((d) => d !== 0) >= 0;
-          elevatorData[obj.e].direction = isUp ? "up" : "down";
-          obj.elevator.goingDownIndicator(!isUp);
-          obj.elevator.goingUpIndicator(isUp);
-          destinations.map((floorNum) => obj.elevator.goToFloor(floorNum));
+          getDestinations(obj).map((floorNum) =>
+            obj.elevator.goToFloor(floorNum)
+          );
         });
     }
     function request(floor, direction) {
       const floorNum = floor.floorNum();
-      if (!floorData[floorNum][direction]) {
-        floorData[floorNum][direction] = now;
+      if (!floorData[floorNum][direction].need_elevator) {
+        floorData[floorNum][direction].need_elevator = now;
       }
       recompute();
     }
     function elevatorFloor(e, floorNum, isStopping) {
       if (isStopping) {
-        if (floorData[floorNum][elevatorData[e].direction]) {
-          delete elevatorData[e].buttons[floorNum];
-          floorData[floorNum].need_floor =
-            floorData[floorNum][elevatorData[e].direction];
-          delete floorData[floorNum][elevatorData[e].direction];
+        elevatorData[e].direction =
+          elevators[e].destinationQueue.length === 0
+            ? ["up", "down"].find(
+                (direction) =>
+                  floorData[floorNum][direction].need_elevator !== undefined
+              )
+            : elevators[e].destinationQueue[0] > elevators[e].currentFloor()
+            ? "up"
+            : "down";
+        if (elevatorData[e].direction !== undefined) {
+          const isUp = elevatorData[e].direction === "up";
+          elevators[e].goingDownIndicator(!isUp);
+          elevators[e].goingUpIndicator(isUp);
+          if (floorData[floorNum][elevatorData[e].direction]) {
+            delete elevatorData[e].buttons[floorNum];
+            floorData[floorNum].need_floor =
+              floorData[floorNum][elevatorData[e].direction].need_elevator;
+            delete floorData[floorNum][elevatorData[e].direction].need_elevator;
+          }
         }
         recompute();
       }
@@ -151,6 +163,7 @@
         elevator.goToFloor(
           floors[Math.floor((e + 0.5) * floorsPerElevator)].floorNum()
         );
+        delete elevatorData[e].direction;
         elevator.goingDownIndicator(false);
         elevator.goingUpIndicator(false);
       });
@@ -159,7 +172,9 @@
         elevatorData[e].buttons[floorNum] = {
           boarded: now,
           requested:
-            floorData[elevator.currentFloor()][elevatorData[e].direction],
+            floorData[elevator.currentFloor()][
+              floorNum > elevator.currentFloor() ? "up" : "down"
+            ].need_floor,
         };
         recompute();
       });
