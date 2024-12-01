@@ -98,12 +98,19 @@
         .flatMap((f, floorNum) =>
           Object.entries(f)
             .map(([direction, ff]) => ({ direction, ff }))
+            .filter(({ ff }) => ff.need_elevator !== undefined)
             .map(({ direction, ff }) => ({ floorNum, direction, ff }))
         )
         .sort((a, b) => a.floorNum - b.floorNum)
         .map((floorObj) => ({
           floorNum: floorObj.floorNum,
           elevatorFloors: elevatorRequests
+            .filter((obj) => obj.elevator.loadFactor() < 0.9)
+            .filter(
+              (obj) =>
+                !elevatorData[obj.e].direction ||
+                elevatorData[obj.e].direction === floorObj.direction
+            )
             .map((obj) => ({
               ...obj,
               score: requestScore(obj, floorObj),
@@ -148,7 +155,7 @@
           elevators[e].goingUpIndicator(isUp);
           if (floorData[floorNum][elevatorData[e].direction]) {
             delete elevatorData[e].buttons[floorNum];
-            floorData[floorNum].need_floor =
+            floorData[floorNum][elevatorData[e].direction].need_floor =
               floorData[floorNum][elevatorData[e].direction].need_elevator;
             delete floorData[floorNum][elevatorData[e].direction].need_elevator;
           }
