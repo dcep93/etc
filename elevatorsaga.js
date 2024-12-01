@@ -78,10 +78,11 @@
     console.clear();
     console.log("init");
     var alerting = true;
-    window.alert = (msg) => {
-      if (!alerting || !confirm(JSON.stringify(msg))) {
+    window.alert = (obj) => {
+      if (!alerting || !confirm(JSON.stringify(obj))) {
         alerting = false;
       }
+      return obj;
     };
     window.now = 0;
     const elevatorData = elevators.map(() => ({ buttons: {} }));
@@ -109,12 +110,10 @@
             }))
             .sort((a, b) => b.score - a.score)[0]?.floorNums,
         }))
-        .filter(
-          ({ floorNum, elevatorFloors }) =>
-            elevatorFloors && !elevatorFloors.includes(floorNum)
-        )
         .map(({ floorNum, elevatorFloors }) => {
-          elevatorFloors.push(floorNum);
+          elevatorFloors &&
+            !elevatorFloors.includes(floorNum) &&
+            elevatorFloors.push(floorNum);
         });
       elevatorRequests
         .filter(({ floorNums }) => floorNums.length > 0)
