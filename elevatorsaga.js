@@ -1,17 +1,21 @@
 ({
   init: function (elevators, floors) {
+    // custom
+
     // should this elevator claim this floor,
     // potentially pivoting to head there first?
     function requestScore(obj, floorObj, shouldPivot) {
-      if (
-        shouldPivot &&
-        !(
-          elevatorData[obj.e].direction !==
-          getDirection(floorObj.floorNum, obj.e, false)
-        )
-      ) {
-        return Number.NEGATIVE_INFINITY;
-      }
+      return shouldPivot ? 0 : 1;
+      // todo
+      //   if (
+      //     shouldPivot &&
+      //     !(
+      //       elevatorData[obj.e].direction !==
+      //       getDirection(floorObj.floorNum, obj.e, false)
+      //     )
+      //   ) {
+      //     return Number.NEGATIVE_INFINITY;
+      //   }
       const currDist = Math.abs(
         elevators[obj.e].currentFloor() - floorObj.floorNum
       );
@@ -25,10 +29,10 @@
         -1 * elevators[obj.e].loadFactor(),
 
         // penalize if going the wrong way
-        elevatorData[obj.e].direction &&
-        elevatorData[obj.e].direction !== floorObj.direction
-          ? Number.NEGATIVE_INFINITY
-          : 0,
+        // elevatorData[obj.e].direction &&
+        // elevatorData[obj.e].direction !== floorObj.direction
+        //   ? Number.NEGATIVE_INFINITY
+        //   : 0,
 
         // reward if we are already there
         currDist === 0 ? 1000 : 0,
@@ -40,16 +44,22 @@
         ef: elevators[obj.e].currentFloor(),
         floorNum: floorObj.floorNum,
         lf: elevators[obj.e].loadFactor(),
-        eDirection: obj.direction,
+        eDirection: elevatorData[obj.e].direction,
         floorDirection: floorObj.direction,
-        edir: elevators[obj.e].direction,
+        shouldPivot,
         rval,
       });
       return rval;
     }
     // given an elevator's queue, where should it go?
     function getDirectionValue(segment, obj) {
+      return [];
       return [
+        // penalize if far from current destination
+        elevators[obj.e].destinationQueue[0] !== undefined
+          ? -Math.abs(elevators[obj.e].destinationQueue[0] - segment[0])
+          : 0,
+
         // reward if we are already there
         elevators[obj.e].currentFloor() === segment[0] ? 10 : 0,
         // penalize if far
@@ -162,6 +172,10 @@
               queue: elevators[obj.e].destinationQueue,
               directionData,
             });
+            directionData
+              .sort((a, b) => b.total - a.total)
+              .flatMap(({ segment }) => segment)
+              .map((floorNum) => elevators[obj.e].goToFloor(floorNum));
             setDirectionAndLights(obj.e);
           });
       })();
