@@ -17,7 +17,7 @@
       //     return Number.NEGATIVE_INFINITY;
       //   }
       const currDist = Math.abs(
-        elevators[obj.e].currentFloor() - floorObj.floorNum
+        elevatorData[obj.e].floorFloat - floorObj.floorNum
       );
       const rval = [
         // penalize pivoting
@@ -41,7 +41,7 @@
       ].reduce((a, b) => a + b);
       console.log("floor", {
         e: obj.e,
-        ef: elevators[obj.e].currentFloor(),
+        ef: elevatorData[obj.e].floorFloat,
         floorNum: floorObj.floorNum,
         lf: elevators[obj.e].loadFactor(),
         eDirection: elevatorData[obj.e].direction,
@@ -63,7 +63,7 @@
         // reward if we are already there
         elevators[obj.e].currentFloor() === segment[0] ? 10 : 0,
         // penalize if far
-        -1 * Math.abs(elevators[obj.e].currentFloor() - segment[0]),
+        -1 * Math.abs(elevatorData[obj.e].floorFloat - segment[0]),
 
         // reward if dropping off first
         elevatorData[obj.e].buttons[segment[0]] ? 10 : 0,
@@ -92,7 +92,7 @@
     }
     // public
     // {buttons: {[floorNum: number]: {boarded: number; pressed: number}}; direction?: "up" | "down"}[]
-    const elevatorData = elevators.map(() => ({ buttons: {} }));
+    const elevatorData = elevators.map(() => ({ buttons: {}, floorFloat: 0 }));
     // {up: {need_floor?: number; need_elevator?: number}, down: {}}[]
     const floorData = floors.map(() => ({ up: {}, down: {} }));
     function recompute() {
@@ -168,7 +168,7 @@
               }));
             console.log("elevator", {
               e: obj.e,
-              c: elevators[obj.e].currentFloor(),
+              c: elevatorData[obj.e].floorFloat,
               queue: elevators[obj.e].destinationQueue,
               directionData,
             });
@@ -183,7 +183,7 @@
     // internal
     const initialSeed = Math.PI % 1;
     window.seed = initialSeed;
-    const randomSize = (1113 / 7) * 1000;
+    const randomSize = (13 / 7) * 1000;
     if (!window.originalRandom) window.originalRandom = _.random;
     const h = (args) => {
       const oldseed = seed;
@@ -240,6 +240,7 @@
       elevators[e].goingDownIndicator(!isUp);
     }
     function elevatorFloor(e, floorNum, isStopping) {
+      elevatorData[e].floorFloat = floorNum;
       if (isStopping) {
         if (floorData[floorNum][elevatorData[e].direction]?.need_elevator) {
           delete elevatorData[e].buttons[floorNum];
@@ -248,6 +249,11 @@
           delete floorData[floorNum][elevatorData[e].direction].need_elevator;
         }
         setDirectionAndLights(e);
+      }
+      if (elevatorData[e].direction === "up") {
+        elevatorData[e].floorFloat += 0.25;
+      } else if (elevatorData[e].direction === "down") {
+        elevatorData[e].floorFloat -= 0.25;
       }
     }
     const floorsPerElevator = (floors.length - 1) / elevators.length;
