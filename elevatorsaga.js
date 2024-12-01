@@ -88,12 +88,12 @@
     const elevatorData = elevators.map(() => ({ buttons: {} }));
     const floorData = floors.map(() => ({ up: {}, down: {} }));
     function recompute() {
-      console.log("recompute", { elevatorData, floorData });
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
         elevator,
         floorNums: elevator.getPressedFloors(),
       }));
+      console.log("recompute", { elevatorData, floorData, elevatorRequests });
       floorData
         .flatMap((f, floorNum) =>
           Object.entries(f)
@@ -105,7 +105,12 @@
         .map((floorObj) => ({
           floorNum: floorObj.floorNum,
           elevatorFloors: elevatorRequests
-            .filter((obj) => obj.elevator.loadFactor() < 0.9)
+            .filter(
+              (obj) =>
+                obj.elevator.maxPassengerCount() *
+                  (1 - obj.elevator.loadFactor()) >=
+                2
+            )
             .filter(
               (obj) =>
                 !elevatorData[obj.e].direction ||
