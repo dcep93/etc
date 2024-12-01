@@ -20,6 +20,8 @@
         ef: obj.elevator.currentFloor(),
         floorNum: floorObj.floorNum,
         lf: obj.elevator.loadFactor(),
+        direction: floorObj.direction,
+        edir: elevatorData[obj.e].direction,
         rval,
       });
       return rval;
@@ -87,7 +89,7 @@
     window.now = 0;
     const elevatorData = elevators.map(() => ({ buttons: {} }));
     const floorData = floors.map(() => ({ up: {}, down: {} }));
-    function recompute() {
+    function recompute(canRecurse = true) {
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
         elevator,
@@ -105,12 +107,7 @@
         .map((floorObj) => ({
           floorNum: floorObj.floorNum,
           elevatorFloors: elevatorRequests
-            .filter(
-              (obj) =>
-                obj.elevator.maxPassengerCount() *
-                  (1 - obj.elevator.loadFactor()) >=
-                2
-            )
+            .filter((obj) => obj.elevator.loadFactor() < 0.7)
             .filter(
               (obj) =>
                 !elevatorData[obj.e].direction ||
@@ -127,6 +124,7 @@
             !elevatorFloors.includes(floorNum) &&
             elevatorFloors.push(floorNum);
         });
+      var shouldRecurse = false;
       elevatorRequests
         .filter(({ floorNums }) => floorNums.length > 0)
         .map((obj) => {
@@ -134,7 +132,15 @@
           getDestinations(obj).map((floorNum) =>
             obj.elevator.goToFloor(floorNum)
           );
+          const oldDirection = elevatorData[obj.e].direction;
+          assignDirection(obj.e);
+          if (canRecurse && elevatorData[obj.e].direction !== oldDirection) {
+            shouldRecurse = true;
+          }
         });
+      if (shouldRecurse) {
+        recompute(false);
+      }
     }
     function request(floor, direction) {
       const floorNum = floor.floorNum();
@@ -143,29 +149,38 @@
       }
       recompute();
     }
+    function assignDirection(e) {
+      const destinationQueue = elevators[e].destinationQueue.filter(
+        (f) => f !== elevators[e].currentFloor()
+      );
+      elevatorData[e].direction =
+        destinationQueue.length === 0
+          ? ["up", "down"].find(
+              (direction) =>
+                floorData[elevators[e].currentFloor()][direction]
+                  .need_elevator !== undefined
+            )
+          : destinationQueue[0] > elevators[e].currentFloor()
+          ? "up"
+          : "down";
+
+      if (elevatorData[e].direction !== undefined) {
+        const isUp = elevatorData[e].direction === "up";
+        elevators[e].goingDownIndicator(!isUp);
+        elevators[e].goingUpIndicator(isUp);
+      }
+    }
     function elevatorFloor(e, floorNum, isStopping) {
       if (isStopping) {
-        elevatorData[e].direction =
-          elevators[e].destinationQueue.length === 0
-            ? ["up", "down"].find(
-                (direction) =>
-                  floorData[floorNum][direction].need_elevator !== undefined
-              )
-            : elevators[e].destinationQueue[0] > elevators[e].currentFloor()
-            ? "up"
-            : "down";
-        if (elevatorData[e].direction !== undefined) {
-          const isUp = elevatorData[e].direction === "up";
-          elevators[e].goingDownIndicator(!isUp);
-          elevators[e].goingUpIndicator(isUp);
-          if (floorData[floorNum][elevatorData[e].direction]) {
-            delete elevatorData[e].buttons[floorNum];
-            floorData[floorNum][elevatorData[e].direction].need_floor =
-              floorData[floorNum][elevatorData[e].direction].need_elevator;
-            delete floorData[floorNum][elevatorData[e].direction].need_elevator;
-          }
-        }
+        assignDirection(e);
         recompute();
+        if (floorNum === 0 && elevatorData[e].direction === "down") asdf;
+        if (floorData[floorNum][elevatorData[e].direction]?.need_elevator) {
+          delete elevatorData[e].buttons[floorNum];
+          floorData[floorNum][elevatorData[e].direction].need_floor =
+            floorData[floorNum][elevatorData[e].direction].need_elevator;
+          delete floorData[floorNum][elevatorData[e].direction].need_elevator;
+        }
       }
     }
     const floorsPerElevator = (floors.length - 1) / elevators.length;
