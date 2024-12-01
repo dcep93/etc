@@ -3,37 +3,44 @@
     // should this elevator claim this floor,
     // potentially pivoting to head there first?
     function requestScore(obj, floorObj, shouldPivot) {
+      if (
+        shouldPivot &&
+        elevatorData[obj.e].direction ===
+          getDirection(floorObj.floorNum, obj.e, false)
+      ) {
+        return Number.NEGATIVE_INFINITY;
+      }
       const currDist = Math.abs(
-        obj.elevator.currentFloor() - floorObj.floorNum
+        elevators[obj.e].currentFloor() - floorObj.floorNum
       );
-
-      // todo
-
-      //   .filter((obj) => obj.elevator.loadFactor() < 0.7)
-      //   .filter(
-      //     (obj) =>
-      //       !elevatorData[obj.e].direction ||
-      //       elevatorData[obj.e].direction === floorObj.direction
-      //   )
       const rval = [
-        obj.elevator.loadFactor() > 0.9 ? -1000 : 0,
-        obj.elevator.loadFactor() > 0.6 ? -100 : 0,
-        obj.elevator.loadFactor() > 0.1 ? -50 : 0,
-        -10 * obj.elevator.loadFactor(),
+        // penalize pivoting
+        shouldPivot ? -1 : 0,
 
-        obj.direction === floorObj.direction ? 100 : 0,
+        // penalize load
+        elevators[obj.e].loadFactor() > 0.75 ? Number.NEGATIVE_INFINITY : 0,
+        elevators[obj.e].loadFactor() > 0.4 ? -100 : 0,
+        -1 * elevators[obj.e].loadFactor(),
 
-        currDist === 0 ? 100 : 0,
+        // penalize if going the wrong way
+        elevatorData[obj.e].direction &&
+        elevatorData[obj.e].direction !== floorObj.direction
+          ? Number.NEGATIVE_INFINITY
+          : 0,
+
+        // reward if we are already there
+        currDist === 0 ? 1000 : 0,
+        // penalize if far
         -20 * currDist,
       ].reduce((a, b) => a + b);
       console.log("floor", {
         e: obj.e,
-        ef: obj.elevator.currentFloor(),
+        ef: elevators[obj.e].currentFloor(),
         floorNum: floorObj.floorNum,
-        lf: obj.elevator.loadFactor(),
+        lf: elevators[obj.e].loadFactor(),
         eDirection: obj.direction,
         floorDirection: floorObj.direction,
-        edir: elevatorData[obj.e].direction,
+        edir: elevators[obj.e].direction,
         rval,
       });
       return rval;
@@ -41,8 +48,14 @@
     // given an elevator's queue, where should it go?
     function getDirectionValue(segment, obj) {
       return [
-        obj.elevator.currentFloor() === segment[0] ? 10 : 0,
-        -1 * Math.abs(obj.elevator.currentFloor() - segment[0]),
+        // reward if we are already there
+        elevators[obj.e].currentFloor() === segment[0] ? 10 : 0,
+        // penalize if far
+        -1 * Math.abs(elevators[obj.e].currentFloor() - segment[0]),
+
+        // reward if dropping off first
+        elevatorData[obj.e].buttons[segment[0]] ? 10 : 0,
+
         0 *
           Math.min(
             0,
@@ -101,14 +114,15 @@
                   shouldPivot,
                   score: requestScore(obj, floorObj, shouldPivot),
                 }))
-                .sort((a, b) => b.score.value - a.score.value)[0]
+                .sort((a, b) => b.score - a.score)[0]
           );
           if (
+            bestRequest.score > Number.NEGATIVE_INFINITY &&
             bestRequest?.floorNums &&
             !bestRequest.floorNums.includes(floorNum)
           ) {
             if (bestRequest.shouldPivot) {
-              setDirection(floorObj.floorNum);
+              getDirection(floorObj.floorNum, bestRequest.e, true);
             }
             bestRequest.floorNums.push(floorNum);
           }
@@ -119,17 +133,17 @@
       elevatorRequests
         .filter(({ floorNums }) => floorNums.length > 0)
         .map((obj) => {
-          obj.elevator.stop();
+          elevators[obj.e].stop();
           obj.floorNums.sort((a, b) => a - b);
           const segments = {
             up: obj.floorNums.filter(
-              (floorNum) => floorNum > obj.elevator.currentFloor()
+              (floorNum) => floorNum > elevators[obj.e].currentFloor()
             ),
             down: obj.floorNums
-              .filter((floorNum) => floorNum < obj.elevator.currentFloor())
+              .filter((floorNum) => floorNum < elevators[obj.e].currentFloor())
               .reverse(),
             [undefined]: obj.floorNums.filter(
-              (floorNum) => floorNum === obj.elevator.currentFloor()
+              (floorNum) => floorNum === elevators[obj.e].currentFloor()
             ),
           };
           const directionData = Object.values(segments)
@@ -144,11 +158,11 @@
           directionData
             .sort((a, b) => b.total - a.total)
             .flatMap((segment) => segment)
-            .map((floorNum) => obj.elevator.goToFloor(floorNum));
+            .map((floorNum) => elevators[obj.e].goToFloor(floorNum));
           console.log("elevator", {
             e: obj.e,
-            c: obj.elevator.currentFloor(),
-            queue: obj.elevator.destinationQueue,
+            c: elevators[obj.e].currentFloor(),
+            queue: elevators[obj.e].destinationQueue,
             directionScores,
             directionData,
           });
@@ -190,14 +204,14 @@
       }
       recompute();
     }
-    function setDirection(destinationFloor, e) {
+    function getDirection(destinationFloor, e, shouldUpdate) {
       const lift = destinationFloor - elevators[e].currentFloor();
       if (lift === 0) {
         return;
       }
-      const isUp = lift > 0;
-      elevatorData[e].direction = isUp ? "up" : "down";
-      return isUp;
+      const direction = lift > 0 ? "up" : "down";
+      if (shouldUpdate) elevatorData[e].direction = direction;
+      return direction;
     }
     function setDirectionAndLights(e) {
       if (
@@ -207,7 +221,7 @@
         elevators[e].goingDownIndicator(true);
         elevators[e].goingUpIndicator(true);
       }
-      const isUp = setDirection(elevators[e].destinationQueue[0]);
+      const isUp = getDirection(elevators[e].destinationQueue[0], e, true);
       if (isUp === undefined) {
         return;
       }
