@@ -102,7 +102,7 @@
     }));
     // {up: {need_floor?: number; need_elevator?: number}, down: {}}[]
     const floorData = floors.map(() => ({ up: {}, down: {} }));
-    function recompute() {
+    function recompute(s) {
       // {e: number; floors: {floorNum: number, reason: "dropoff" | "up" | "down"}[]}[]
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
@@ -117,7 +117,7 @@
         floorData,
         elevatorRequests,
       };
-      console.log("recompute", x);
+      console.log("recompute", s, x);
       floorData
         .flatMap((f, floorNum) =>
           Object.entries(f)
@@ -205,6 +205,7 @@
                 elevatorData[obj.e].lightsQueue.unshift(reason);
               }
             });
+          elevatorData[obj.e].lightsQueue.unshift("init");
           setDirectionAndLights(obj.e);
         });
     }
@@ -241,7 +242,7 @@
       if (!floorData[floorNum][direction].need_elevator) {
         floorData[floorNum][direction].need_elevator = now;
       }
-      recompute();
+      recompute("request");
     }
     function getDirection(destinationFloor, e, shouldUpdate) {
       const lift = destinationFloor - elevators[e].currentFloor();
@@ -263,6 +264,9 @@
         elevators[e].goingUpIndicator(true);
       } else if (nextTask === "down") {
         elevators[e].goingDownIndicator(true);
+        elevators[e].goingUpIndicator(false);
+      } else if (!nextTask) {
+        elevators[e].goingDownIndicator(false);
         elevators[e].goingUpIndicator(false);
       } else if (
         elevators[e].maxPassengerCount() * (1 - elevators[e].loadFactor()) >
@@ -297,7 +301,7 @@
         } else if (elevatorData[e].direction === "down") {
           elevatorData[e].floorFloat -= 0.25;
         }
-        recompute();
+        recompute("stop");
       }
     }
     const floorsPerElevator = (floors.length - 1) / elevators.length;
@@ -319,7 +323,7 @@
               floorNum > elevator.currentFloor() ? "up" : "down"
             ].need_floor,
         };
-        recompute();
+        recompute("button");
       });
 
       elevator.on("stopped_at_floor", function (floorNum) {
