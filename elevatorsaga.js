@@ -187,22 +187,22 @@
             .flatMap(({ segment }) => segment)
             .map(({ floorNum, reason }) => {
               if (floorNum === prevFloor) {
-                if (elevatorData[obj.e].lightsQueue === "dropoff") {
-                  elevatorData[obj.e].lightsQueue = reason;
-                } else if (elevatorData[obj.e].lightsQueue === "both") {
-                } else if (elevatorData[obj.e].lightsQueue === "up") {
+                if (elevatorData[obj.e].lightsQueue[0] === "dropoff") {
+                  elevatorData[obj.e].lightsQueue[0] = reason;
+                } else if (elevatorData[obj.e].lightsQueue[0] === "both") {
+                } else if (elevatorData[obj.e].lightsQueue[0] === "up") {
                   if (reason === "down") {
-                    elevatorData[obj.e].lightsQueue = "both";
+                    elevatorData[obj.e].lightsQueue[0] = "both";
                   }
-                } else if (elevatorData[obj.e].lightsQueue === "down") {
+                } else if (elevatorData[obj.e].lightsQueue[0] === "down") {
                   if (reason === "up") {
-                    elevatorData[obj.e].lightsQueue = "both";
+                    elevatorData[obj.e].lightsQueue[0] = "both";
                   }
                 }
               } else {
                 prevFloor = floorNum;
-                elevatorData[obj.e].lightsQueue.unshift(reason);
                 elevators[obj.e].goToFloor(floorNum);
+                elevatorData[obj.e].lightsQueue.unshift(reason);
               }
             });
           setDirectionAndLights(obj.e);
@@ -253,7 +253,8 @@
       return direction;
     }
     function setDirectionAndLights(e) {
-      const nextTask = elevatorData[e].lightsQueue.shift();
+      const nextTask = elevatorData[e].lightsQueue[0];
+      elevatorData[e].lightsQueue.shift();
       if (nextTask === "both") {
         elevators[e].goingDownIndicator(true);
         elevators[e].goingUpIndicator(true);
@@ -278,13 +279,18 @@
     function elevatorFloor(e, floorNum, isStopping) {
       elevatorData[e].floorFloat = floorNum;
       if (isStopping) {
+        (elevatorData[e].lightsQueue[0] === "both"
+          ? ["up", "down"]
+          : [elevatorData[e].lightsQueue[0]]
+        ).map((direction) => {
+          if (floorData[floorNum][direction]?.need_elevator) {
+            delete elevatorData[e].buttons[floorNum];
+            floorData[floorNum][direction].need_floor =
+              floorData[floorNum][direction].need_elevator;
+            delete floorData[floorNum][direction].need_elevator;
+          }
+        });
         setDirectionAndLights(e);
-        if (floorData[floorNum][elevatorData[e].direction]?.need_elevator) {
-          delete elevatorData[e].buttons[floorNum];
-          floorData[floorNum][elevatorData[e].direction].need_floor =
-            floorData[floorNum][elevatorData[e].direction].need_elevator;
-          delete floorData[floorNum][elevatorData[e].direction].need_elevator;
-        }
 
         if (elevatorData[e].direction === "up") {
           elevatorData[e].floorFloat += 0.25;
