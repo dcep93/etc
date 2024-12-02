@@ -92,15 +92,21 @@
       ];
     }
     // public
-    // {buttons: {[floorNum: number]: {boarded: number; pressed: number}}; direction?: "up" | "down"}[]
-    const elevatorData = elevators.map(() => ({ buttons: {}, floorFloat: 0 }));
+    // {buttons: {[floorNum: number]: {boarded: number; pressed: number}}; direction?: "up" | "down"; lightsQueue: "both" | "up" | "down"[]}[]
+    const elevatorData = elevators.map(() => ({
+      buttons: {},
+      floorFloat: 0,
+      lightsQueue: [],
+    }));
     // {up: {need_floor?: number; need_elevator?: number}, down: {}}[]
     const floorData = floors.map(() => ({ up: {}, down: {} }));
     function recompute() {
-      // {e: number; floorNums: number[]}[]
+      // {e: number; floors: {floorNum: number, reason: "dropoff" | "up" | "down"}[]}[]
       const elevatorRequests = elevators.map((elevator, e) => ({
         e,
-        floorNums: elevator.getPressedFloors(),
+        floors: elevator
+          .getPressedFloors()
+          .map((floorNum) => ({ floorNum, reason: "dropoff" })),
       }));
       window.x = {
         elevators,
@@ -128,31 +134,32 @@
               }))
             )
             .sort((a, b) => b.score - a.score)[0];
-          if (
-            bestRequest.score > Number.NEGATIVE_INFINITY &&
-            bestRequest?.floorNums &&
-            !bestRequest.floorNums.includes(floorObj.floorNum)
-          ) {
+          if (bestRequest?.score > Number.NEGATIVE_INFINITY) {
             if (bestRequest.shouldPivot) {
               getDirection(floorObj.floorNum, bestRequest.e, true);
             }
-            bestRequest.floorNums.push(floorObj.floorNum);
+            bestRequest.floors.push({
+              floorNum: floorObj.floorNum,
+              reason: floorObj.direction,
+            });
           }
         });
       elevatorRequests
-        .filter(({ floorNums }) => floorNums.length > 0)
+        .filter(({ floors }) => floors.length > 0)
         .map((obj) => {
           elevators[obj.e].stop();
-          obj.floorNums.sort((a, b) => a - b);
+          obj.floors.sort((a, b) => a.floorNum - b.floorNum);
           const segments = {
-            up: obj.floorNums.filter(
-              (floorNum) => floorNum > elevators[obj.e].currentFloor()
+            up: obj.floors.filter(
+              ({ floorNum }) => floorNum > elevators[obj.e].currentFloor()
             ),
-            down: obj.floorNums
-              .filter((floorNum) => floorNum < elevators[obj.e].currentFloor())
+            down: obj.floors
+              .filter(
+                ({ floorNum }) => floorNum < elevators[obj.e].currentFloor()
+              )
               .reverse(),
-            [undefined]: obj.floorNums.filter(
-              (floorNum) => floorNum === elevators[obj.e].currentFloor()
+            [undefined]: obj.floors.filter(
+              ({ floorNum }) => floorNum === elevators[obj.e].currentFloor()
             ),
           };
           const directionData = Object.values(segments)
@@ -170,10 +177,14 @@
             queue: elevators[obj.e].destinationQueue,
             directionData,
           });
+          elevatorData[obj.e].lightsQueue = [];
           directionData
             .sort((a, b) => b.total - a.total)
             .flatMap(({ segment }) => segment)
-            .map((floorNum) => elevators[obj.e].goToFloor(floorNum));
+            .map(({ floorNum, reason }) => {
+              elevatorData[obj.e].lightsQueue.push(reason);
+              elevators[obj.e].goToFloor(floorNum);
+            });
           setDirectionAndLights(obj.e);
         });
     }
@@ -222,25 +233,32 @@
       return direction;
     }
     function setDirectionAndLights(e) {
-      // todo
-      const isUp = getDirection(elevators[e].destinationQueue[0], e, true);
-      if (isUp === undefined) {
-        return;
-      }
-      if (
+      const nextTask = elevatorData[e].lightsQueue.shift();
+      if (nextTask === "both") {
+        elevators[e].goingDownIndicator(true);
+        elevators[e].goingUpIndicator(true);
+      } else if (nextTask === "up") {
+        elevators[e].goingDownIndicator(false);
+        elevators[e].goingUpIndicator(true);
+      } else if (nextTask === "down") {
+        elevators[e].goingDownIndicator(true);
+        elevators[e].goingUpIndicator(false);
+      } else if (
         elevators[e].maxPassengerCount() * (1 - elevators[e].loadFactor()) >
         3
       ) {
         elevators[e].goingDownIndicator(true);
         elevators[e].goingUpIndicator(true);
-        return;
+      } else {
+        elevators[e].goingDownIndicator(false);
+        elevators[e].goingUpIndicator(false);
       }
-      elevators[e].goingUpIndicator(isUp);
-      elevators[e].goingDownIndicator(!isUp);
+      getDirection(elevators[e].destinationQueue[0], e, true);
     }
     function elevatorFloor(e, floorNum, isStopping) {
       elevatorData[e].floorFloat = floorNum;
       if (isStopping) {
+        setDirectionAndLights(e);
         if (floorData[floorNum][elevatorData[e].direction]?.need_elevator) {
           delete elevatorData[e].buttons[floorNum];
           floorData[floorNum][elevatorData[e].direction].need_floor =
