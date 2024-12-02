@@ -53,27 +53,29 @@
     }
     // given an elevator's queue, where should it go?
     function getDirectionValue(segment, obj) {
-      return [];
-      // todo
       return [
         // penalize if far from current destination
         elevators[obj.e].destinationQueue[0] !== undefined
-          ? -Math.abs(elevators[obj.e].destinationQueue[0] - segment[0])
+          ? -Math.abs(
+              elevators[obj.e].destinationQueue[0] - segment[0].floorNum
+            )
           : 0,
 
         // reward if we are already there
-        elevators[obj.e].currentFloor() === segment[0] ? 10 : 0,
+        elevators[obj.e].currentFloor() === segment[0].floorNum ? 10 : 0,
         // penalize if far
-        -1 * Math.abs(elevatorData[obj.e].floorFloat - segment[0]),
+        -1 * Math.abs(elevatorData[obj.e].floorFloat - segment[0].floorNum),
 
         // reward if dropping off first
-        elevatorData[obj.e].buttons[segment[0]] ? 10 : 0,
+        elevatorData[obj.e].buttons[segment[0].floorNum] ? 10 : 0,
 
         0 *
           Math.min(
             0,
             ...segment
-              .map((floorNum) => elevatorData[obj.e].buttons[floorNum]?.boarded)
+              .map(
+                ({ floorNum }) => elevatorData[obj.e].buttons[floorNum]?.boarded
+              )
               .filter((n) => n)
               .map((t) => now - t)
           ),
@@ -82,7 +84,7 @@
             0,
             ...segment
               .map(
-                (floorNum) =>
+                ({ floorNum }) =>
                   floorData[floorNum][elevatorData[obj.e].direction]
                     ?.need_elevator
               )
@@ -163,6 +165,7 @@
             ),
           };
           const directionData = Object.values(segments)
+            .filter((segments) => segments.length > 0)
             .map((segment) => ({
               segment,
               value: getDirectionValue(segment, obj),
@@ -178,12 +181,29 @@
             directionData,
           });
           elevatorData[obj.e].lightsQueue = [];
+          var prevFloor = null;
           directionData
             .sort((a, b) => b.total - a.total)
             .flatMap(({ segment }) => segment)
             .map(({ floorNum, reason }) => {
-              elevatorData[obj.e].lightsQueue.push(reason);
-              elevators[obj.e].goToFloor(floorNum);
+              if (floorNum === prevFloor) {
+                if (elevatorData[obj.e].lightsQueue === "dropoff") {
+                  elevatorData[obj.e].lightsQueue = reason;
+                } else if (elevatorData[obj.e].lightsQueue === "both") {
+                } else if (elevatorData[obj.e].lightsQueue === "up") {
+                  if (reason === "down") {
+                    elevatorData[obj.e].lightsQueue = "both";
+                  }
+                } else if (elevatorData[obj.e].lightsQueue === "down") {
+                  if (reason === "up") {
+                    elevatorData[obj.e].lightsQueue = "both";
+                  }
+                }
+              } else {
+                prevFloor = floorNum;
+                elevatorData[obj.e].lightsQueue.unshift(reason);
+                elevators[obj.e].goToFloor(floorNum);
+              }
             });
           setDirectionAndLights(obj.e);
         });
