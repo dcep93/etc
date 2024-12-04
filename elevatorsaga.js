@@ -212,7 +212,7 @@
     // internal
     const initialSeed = Math.PI % 1;
     window.seed = initialSeed;
-    const randomSize = (13 / 7) * 1000;
+    const randomSize = (1113 / 7) * 1000;
     if (!window.originalRandom) window.originalRandom = _.random;
     const h = (args) => {
       const oldseed = seed;
@@ -324,6 +324,7 @@
             ].need_floor,
         };
         recompute("button");
+        if (elevator.currentFloor() === 2 && floorNum === 0) asdf;
       });
 
       elevator.on("stopped_at_floor", function (floorNum) {
