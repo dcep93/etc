@@ -20,21 +20,23 @@ def getAnswer(isPart1: bool):
     return rval
 
 
-def isPossible(size, components, isPart1, previous=None):
+def concat(a, b):
+    return (a*(10**math.ceil(math.log10(b+1)))) + b
+
+
+def isPossible(size, components, isPart1):
     if len(components) == 0:
-        return size == previous
-    first, remaining = components[0], components[1:]
-    if size >= first:
-        if previous is None:
-            return isPossible(size, remaining, isPart1, first)
-        if size >= previous:
-            if previous+first <= size:
-                if isPossible(size, remaining, isPart1, previous+first):
-                    return True
-            if previous*first <= size:
-                if isPossible(size, remaining, isPart1, previous*first):
-                    return True
-                if not isPart1 and isPossible(size, remaining, isPart1, first+(previous*(10**math.ceil(math.log10(first+1))))):
+        return size == 0
+    last, remaining = components[-1], components[:-1]
+    if size >= last:
+        if isPossible(size-last, remaining, isPart1):
+            return True
+        if size % last == 0:
+            if isPossible(size//last, remaining, isPart1):
+                return True
+        if not isPart1:
+            if str(size).endswith(str(last)):
+                if isPossible(int('0'+str(size)[:-len(str(last))]), remaining, isPart1):
                     return True
     return False
 
