@@ -16,26 +16,22 @@ type Floor = {
   on: (key: string, f: () => void) => void;
 };
 
+type TaskQueue = {
+  direction: Direction;
+  floorNum: number;
+  reason: Direction;
+}[];
 type ElevatorData = {
   floorFloat: number;
   buttons: {
     [floorNum: number]: { floorNum: number; boarded: number; pressed: number };
   };
-  taskQueue: {
-    direction: Direction;
-    floorNum: number;
-    reason: Direction;
-  }[];
+  taskQueue: TaskQueue;
 }[];
 type FloorData = {
   direction: Direction;
   data: { [r in "need_floor" | "need_elevator"]?: number };
 }[][];
-type ElevatorRef = {
-  elevatorNum: number;
-  taskQueue: { floorNum: number; reason: Direction }[];
-};
-type FloorRef = { floorNum: number };
 type Direction = "dropoff" | "up" | "down" | "both";
 
 var now: number;
@@ -51,9 +47,11 @@ console.log(
           // should this elevator claim this floor,
           // potentially pivoting to head there first?
           function requestScore(
-            elevatorRef: ElevatorRef,
-            floorRef: FloorRef,
-            shouldPivot: boolean
+            elevatorNum: number,
+            floorNum: number,
+            direction: "up" | "down",
+            shouldPivot: boolean,
+            taskQueue: TaskQueue
           ) {
             // return shouldPivot ? 0 : 1;
             // todo
@@ -67,25 +65,30 @@ console.log(
             //     return Number.NEGATIVE_INFINITY;
             //   }
             const currDist = Math.abs(
-              elevatorData[elevatorRef.elevatorNum].floorFloat -
-                floorRef.floorNum
+              elevatorData[elevatorNum].floorFloat - floorNum
             );
+            const canPivot =
+              currDist > 0 &&
+              taskQueue[0].direction &&
+              taskQueue[0].direction !==
+                (elevatorData[elevatorNum].floorFloat > floorNum
+                  ? "down"
+                  : "up");
             const rval = [
+              shouldPivot && !canPivot ? Number.NEGATIVE_INFINITY : 0,
+
               // penalize pivoting
               shouldPivot ? -1 : 0,
 
               // penalize load
-              elevators[elevatorRef.elevatorNum].loadFactor() > 0.75
+              elevators[elevatorNum].loadFactor() > 0.75
                 ? Number.NEGATIVE_INFINITY
                 : 0,
-              elevators[elevatorRef.elevatorNum].loadFactor() > 0.4 ? -100 : 0,
-              -1 * elevators[elevatorRef.elevatorNum].loadFactor(),
+              elevators[elevatorNum].loadFactor() > 0.4 ? -100 : 0,
+              -1 * elevators[elevatorNum].loadFactor(),
 
               // penalize if going the wrong way
-              // elevatorData[obj.elevatorNum].direction &&
-              // elevatorData[obj.elevatorNum].direction !== floorObj.direction
-              //   ? Number.NEGATIVE_INFINITY
-              //   : 0,
+              canPivot ? Number.NEGATIVE_INFINITY : 0,
 
               // reward if we are already there
               currDist === 0 ? 1000 : 0,
@@ -93,10 +96,10 @@ console.log(
               -20 * currDist,
             ].reduce((a, b) => a + b);
             console.log("floor", {
-              elevatorNum: elevatorRef.elevatorNum,
-              ef: elevatorData[elevatorRef.elevatorNum].floorFloat,
-              floorNum: floorRef.floorNum,
-              lf: elevators[elevatorRef.elevatorNum].loadFactor(),
+              elevatorNum,
+              ef: elevatorData[elevatorNum].floorFloat,
+              floorNum,
+              lf: elevators[elevatorNum].loadFactor(),
               // eDirection: elevatorData[elevatorRef.elevatorNum].direction,
               // floorDirection: floorRef.direction,
               shouldPivot,
@@ -106,46 +109,42 @@ console.log(
           }
           // given an elevator's queue, what order should it proceed?
           function getDirectionValue(
-            segment: ElevatorRef,
-            elevatorRef: ElevatorRef
+            proposedTaskQueue: TaskQueue,
+            elevatorNum: number
           ) {
             return [
               // penalize if far from current destination
-              elevators[elevatorRef.elevatorNum].destinationQueue[0] !==
-              undefined
+              elevators[elevatorNum].destinationQueue[0] !== undefined
                 ? -Math.abs(
-                    elevators[elevatorRef.elevatorNum].destinationQueue[0] -
-                      segment.taskQueue[0].floorNum
+                    elevators[elevatorNum].destinationQueue[0] -
+                      proposedTaskQueue[0].floorNum
                   )
                 : 0,
 
               // reward if we are already there
-              elevators[elevatorRef.elevatorNum].currentFloor() ===
-              segment.taskQueue[0].floorNum
+              elevators[elevatorNum].currentFloor() ===
+              proposedTaskQueue[0].floorNum
                 ? 10
                 : 0,
               // penalize if far
               -1 *
                 Math.abs(
-                  elevatorData[elevatorRef.elevatorNum].floorFloat -
-                    segment.taskQueue[0].floorNum
+                  elevatorData[elevatorNum].floorFloat -
+                    proposedTaskQueue[0].floorNum
                 ),
 
               // reward if dropping off first
-              elevatorData[elevatorRef.elevatorNum].buttons[
-                segment.taskQueue[0].floorNum
-              ]
+              elevatorData[elevatorNum].buttons[proposedTaskQueue[0].floorNum]
                 ? 10
                 : 0,
 
               0 *
                 Math.min(
                   0,
-                  ...segment.taskQueue
+                  ...proposedTaskQueue
                     .map(
                       ({ floorNum }) =>
-                        elevatorData[elevatorRef.elevatorNum].buttons[floorNum]
-                          ?.boarded
+                        elevatorData[elevatorNum].buttons[floorNum]?.boarded
                     )
                     .filter((n) => n)
                     .map((t) => now - t)
@@ -153,14 +152,13 @@ console.log(
               0 *
                 Math.min(
                   0,
-                  ...segment.taskQueue
+                  ...proposedTaskQueue
                     .map(
                       ({ floorNum }) =>
                         floorData[floorNum].find(
                           (d) =>
                             d.direction ===
-                            elevatorData[elevatorRef.elevatorNum].taskQueue[0]
-                              ?.direction
+                            elevatorData[elevatorNum].taskQueue[0]?.direction
                         )?.data.need_elevator
                     )
                     .filter((n) => n)
