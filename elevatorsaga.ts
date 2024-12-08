@@ -302,6 +302,7 @@ console.log(
                   }
                 });
                 setLights(elevatorRef.elevatorNum);
+                console.log(305);
               });
 
             function attachDirections(
