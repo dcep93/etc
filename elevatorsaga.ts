@@ -284,20 +284,7 @@ console.log(
                   .sort((a, b) => b.total - a.total)
                   .flatMap(({ proposedTaskQueue }) => proposedTaskQueue)
               ).map((floorRef) => {
-                if (floorRef.floorNum === prevFloor) {
-                  // if (elevatorData[obj.elevatorNum].taskQueue[0] === "none") {
-                  //   elevatorData[obj.elevatorNum].taskQueue[0] = reason;
-                  // } else if (elevatorData[obj.elevatorNum].lightsQueue[0] === "both") {
-                  // } else if (elevatorData[obj.elevatorNum].lightsQueue[0] === "up") {
-                  //   if (reason === "down") {
-                  //     elevatorData[obj.elevatorNum].lightsQueue[0] = "both";
-                  //   }
-                  // } else if (elevatorData[obj.elevatorNum].lightsQueue[0] === "down") {
-                  //   if (reason === "up") {
-                  //     elevatorData[obj.elevatorNum].lightsQueue[0] = "both";
-                  //   }
-                  // }
-                } else {
+                if (floorRef.floorNum !== prevFloor) {
                   prevFloor = floorRef.floorNum;
                   elevators[elevatorRef.elevatorNum].goToFloor(
                     floorRef.floorNum
@@ -307,8 +294,7 @@ console.log(
                   );
                 }
               });
-              // elevatorData[obj.elevatorNum].taskQueue.unshift("init");
-              // setDirectionAndLights(obj.elevatorNum);
+              setLights(elevatorRef.elevatorNum);
             });
 
             function attachDirections(
