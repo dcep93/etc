@@ -188,7 +188,7 @@ console.log(
               ])
             )
           );
-          function recompute(recomputeReason: string) {
+          function recompute(recomputeReason: any) {
             const elevatorRefs: ElevatorRef[] = elevators.map(
               (elevator, elevatorNum) => ({
                 elevatorNum,
@@ -238,64 +238,71 @@ console.log(
                   }
                 })
             );
-            elevatorRefs.map((elevatorRef) => {
-              elevatorRef.proposedTaskQueue.sort(
-                (a, b) => a.floorNum - b.floorNum
-              );
-              const segments = {
-                up: elevatorRef.proposedTaskQueue.filter(
-                  ({ floorNum }) =>
-                    floorNum > elevators[elevatorRef.elevatorNum].currentFloor()
-                ),
-                down: elevatorRef.proposedTaskQueue
-                  .filter(
+            elevatorRefs
+              .filter(
+                (elevatorRef) =>
+                  elevatorData[elevatorRef.elevatorNum].taskQueue.length > 0 ||
+                  elevatorRef.proposedTaskQueue.length > 0
+              )
+              .map((elevatorRef) => {
+                elevatorRef.proposedTaskQueue.sort(
+                  (a, b) => a.floorNum - b.floorNum
+                );
+                const segments = {
+                  up: elevatorRef.proposedTaskQueue.filter(
                     ({ floorNum }) =>
-                      floorNum <
+                      floorNum >
                       elevators[elevatorRef.elevatorNum].currentFloor()
-                  )
-                  .reverse(),
-                both: elevatorRef.proposedTaskQueue.filter(
-                  ({ floorNum }) =>
-                    floorNum ===
-                    elevators[elevatorRef.elevatorNum].currentFloor()
-                ),
-              };
-              const directionData = Object.values(segments)
-                .filter((segments) => segments.length > 0)
-                .map((proposedTaskQueue) => ({
-                  proposedTaskQueue,
-                  total: getDirectionValue({
-                    elevatorNum: elevatorRef.elevatorNum,
+                  ),
+                  down: elevatorRef.proposedTaskQueue
+                    .filter(
+                      ({ floorNum }) =>
+                        floorNum <
+                        elevators[elevatorRef.elevatorNum].currentFloor()
+                    )
+                    .reverse(),
+                  both: elevatorRef.proposedTaskQueue.filter(
+                    ({ floorNum }) =>
+                      floorNum ===
+                      elevators[elevatorRef.elevatorNum].currentFloor()
+                  ),
+                };
+                const directionData = Object.values(segments)
+                  .filter((segments) => segments.length > 0)
+                  .map((proposedTaskQueue) => ({
                     proposedTaskQueue,
-                  }).reduce((a, b) => a + b, 0),
-                }));
-              console.log("elevator", {
-                elevatorNum: elevatorRef.elevatorNum,
-                c: elevatorData[elevatorRef.elevatorNum].floorFloat,
-                queue: elevators[elevatorRef.elevatorNum].destinationQueue,
-                directionData,
+                    total: getDirectionValue({
+                      elevatorNum: elevatorRef.elevatorNum,
+                      proposedTaskQueue,
+                    }).reduce((a, b) => a + b, 0),
+                  }));
+                console.log("elevator", {
+                  elevatorNum: elevatorRef.elevatorNum,
+                  c: elevatorData[elevatorRef.elevatorNum].floorFloat,
+                  queue: elevators[elevatorRef.elevatorNum].destinationQueue,
+                  directionData,
+                });
+                elevators[elevatorRef.elevatorNum].stop();
+                elevatorData[elevatorRef.elevatorNum].taskQueue = [];
+                var prevFloor = -1;
+                attachDirections(
+                  elevatorData[elevatorRef.elevatorNum].floorFloat,
+                  directionData
+                    .sort((a, b) => b.total - a.total)
+                    .flatMap(({ proposedTaskQueue }) => proposedTaskQueue)
+                ).map((floorRef) => {
+                  if (floorRef.floorNum !== prevFloor) {
+                    prevFloor = floorRef.floorNum;
+                    elevators[elevatorRef.elevatorNum].goToFloor(
+                      floorRef.floorNum
+                    );
+                    elevatorData[elevatorRef.elevatorNum].taskQueue.unshift(
+                      floorRef
+                    );
+                  }
+                });
+                setLights(elevatorRef.elevatorNum);
               });
-              elevators[elevatorRef.elevatorNum].stop();
-              elevatorData[elevatorRef.elevatorNum].taskQueue = [];
-              var prevFloor = -1;
-              attachDirections(
-                elevatorData[elevatorRef.elevatorNum].floorFloat,
-                directionData
-                  .sort((a, b) => b.total - a.total)
-                  .flatMap(({ proposedTaskQueue }) => proposedTaskQueue)
-              ).map((floorRef) => {
-                if (floorRef.floorNum !== prevFloor) {
-                  prevFloor = floorRef.floorNum;
-                  elevators[elevatorRef.elevatorNum].goToFloor(
-                    floorRef.floorNum
-                  );
-                  elevatorData[elevatorRef.elevatorNum].taskQueue.unshift(
-                    floorRef
-                  );
-                }
-              });
-              setLights(elevatorRef.elevatorNum);
-            });
 
             function attachDirections(
               currentFloor: number,
@@ -349,11 +356,10 @@ console.log(
           //
           function request(floorNum: number, direction: "up" | "down") {
             const data = floorData[floorNum][direction]!.data;
-            if (data.need_elevator) {
-              throw new Error("data.need_elevator");
+            if (!data.need_elevator) {
+              data.need_elevator = now;
             }
-            data.need_elevator = now;
-            recompute("request");
+            recompute({ request: { floorNum, direction } });
           }
 
           function elevatorFloor(
@@ -363,29 +369,31 @@ console.log(
           ) {
             elevatorData[elevatorNum].floorFloat = floorNum;
             if (isStopping) {
-              const floorRef = elevatorData[elevatorNum].taskQueue.shift()!;
-              [floorRef.reason]
-                .flatMap((reason) =>
-                  reason === "both" ? ["up", "down"] : reason
-                )
-                .map((direction) => {
-                  if (floorData[floorNum][direction]?.data.need_elevator) {
-                    delete elevatorData[elevatorNum].buttons[floorNum];
-                    floorData[floorNum][direction].data.need_floor =
-                      floorData[floorNum][direction].data.need_elevator;
-                    delete floorData[floorNum][direction].data.need_elevator;
-                  }
-                });
-              setLights(elevatorNum);
-              switch (elevatorData[elevatorNum].taskQueue[0]?.direction) {
-                case "up":
-                  elevatorData[elevatorNum].floorFloat += 0.25;
-                  break;
-                case "down":
-                  elevatorData[elevatorNum].floorFloat -= 0.25;
-                  break;
+              const floorRef = elevatorData[elevatorNum].taskQueue.shift();
+              if (floorRef) {
+                [elevatorData[elevatorNum].taskQueue.shift()?.reason || "none"]
+                  .flatMap((reason) =>
+                    reason === "both" ? ["up", "down"] : reason
+                  )
+                  .map((direction) => {
+                    if (floorData[floorNum][direction]?.data.need_elevator) {
+                      delete elevatorData[elevatorNum].buttons[floorNum];
+                      floorData[floorNum][direction].data.need_floor =
+                        floorData[floorNum][direction].data.need_elevator;
+                      delete floorData[floorNum][direction].data.need_elevator;
+                    }
+                  });
+                setLights(elevatorNum);
+                switch (elevatorData[elevatorNum].taskQueue[0]?.direction) {
+                  case "up":
+                    elevatorData[elevatorNum].floorFloat += 0.25;
+                    break;
+                  case "down":
+                    elevatorData[elevatorNum].floorFloat -= 0.25;
+                    break;
+                }
+                recompute({ stop: { elevatorNum, floorNum } });
               }
-              recompute("stop");
             }
           }
           function setLights(elevatorNum: number) {
@@ -419,7 +427,7 @@ console.log(
                   floorData[elevator.currentFloor()][direction]!.data
                     .need_floor!,
               };
-              recompute("button");
+              recompute({ button: { floorNum } });
             });
 
             elevator.on("stopped_at_floor", function (floorNum) {
