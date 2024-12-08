@@ -16,22 +16,26 @@ type Floor = {
   on: (key: string, f: () => void) => void;
 };
 
-type TaskQueue = {
-  direction: Direction;
-  floorNum: number;
-  reason: Direction;
-}[];
 type ElevatorData = {
   floorFloat: number;
   buttons: {
     [floorNum: number]: { floorNum: number; boarded: number; pressed: number };
   };
-  taskQueue: TaskQueue;
+  taskQueue: FloorRef[];
 }[];
+type ElevatorRef = {
+  elevatorNum: number;
+  proposedTaskQueue: FloorRef[];
+};
 type FloorData = {
   direction: Direction;
   data: { [r in "need_floor" | "need_elevator"]?: number };
 }[][];
+type FloorRef = {
+  floorNum: number;
+  direction: Direction;
+  reason: Direction;
+};
 type Direction = "dropoff" | "up" | "down" | "both";
 
 var now: number;
@@ -47,11 +51,9 @@ console.log(
           // should this elevator claim this floor,
           // potentially pivoting to head there first?
           function requestScore(
-            elevatorNum: number,
-            floorNum: number,
-            direction: "up" | "down",
-            shouldPivot: boolean,
-            taskQueue: TaskQueue
+            elevatorRef: ElevatorRef,
+            floorRef: FloorRef,
+            shouldPivot: boolean
           ) {
             // return shouldPivot ? 0 : 1;
             // todo
@@ -65,13 +67,15 @@ console.log(
             //     return Number.NEGATIVE_INFINITY;
             //   }
             const currDist = Math.abs(
-              elevatorData[elevatorNum].floorFloat - floorNum
+              elevatorData[elevatorRef.elevatorNum].floorFloat -
+                floorRef.floorNum
             );
             const canPivot =
               currDist > 0 &&
-              taskQueue[0].direction &&
-              taskQueue[0].direction !==
-                (elevatorData[elevatorNum].floorFloat > floorNum
+              elevatorRef.taskQueue[0].direction &&
+              elevatorRef.taskQueue[0].direction !==
+                (elevatorData[elevatorRef.elevatorNum].floorFloat >
+                floorRef.floorNum
                   ? "down"
                   : "up");
             const rval = [
