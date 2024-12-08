@@ -57,7 +57,7 @@ console.log(
             floorRef: FloorRef,
             shouldPivot: boolean
           ) {
-            // return shouldPivot ? 0 : 1;
+            return shouldPivot ? 0 : 1;
             // todo
             //   if (
             //     shouldPivot &&
@@ -415,9 +415,9 @@ console.log(
               elevatorData[elevatorNum].buttons[floorNum] = {
                 floorNum,
                 boarded: now,
-                pressed: floorData[elevator.currentFloor()].find(
-                  (d) => d.direction === direction
-                )!.data.need_floor!,
+                pressed:
+                  floorData[elevator.currentFloor()][direction]!.data
+                    .need_floor!,
               };
               recompute("button");
             });
