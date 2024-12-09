@@ -302,7 +302,6 @@ console.log(
                   }
                 });
                 setLights(elevatorRef.elevatorNum);
-                console.log(305);
               });
 
             function attachDirections(
@@ -327,7 +326,7 @@ console.log(
           // internal
           const initialSeed = Math.PI % 1;
           var seed = initialSeed;
-          const randomSize = (1113 / 7) * 10000;
+          const randomSize = (11113 / 7) * 10000;
           const h = (args: number | undefined) => {
             const oldseed = seed;
             seed = (seed * randomSize) % 1;
