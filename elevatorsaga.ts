@@ -57,17 +57,6 @@ console.log(
             floorRef: FloorRef,
             shouldPivot: boolean
           ) {
-            return shouldPivot ? 0 : 1;
-            // todo
-            //   if (
-            //     shouldPivot &&
-            //     !(
-            //       elevatorData[obj.elevatorNum].direction !==
-            //       getDirection(floorObj.floorNum, obj.elevatorNum, false)
-            //     )
-            //   ) {
-            //     return Number.NEGATIVE_INFINITY;
-            //   }
             const currDist = Math.abs(
               elevatorData[elevatorRef.elevatorNum].floorFloat -
                 floorRef.floorNum
