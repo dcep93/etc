@@ -115,6 +115,7 @@ console.log(
           }
           // given an elevator's queue, what order should it proceed?
           function getDirectionValue(proposedElevatorRef: ElevatorRef) {
+            return [];
             return [
               // penalize if far from current destination
               elevators[proposedElevatorRef.elevatorNum].destinationQueue[0] !==
@@ -210,8 +211,12 @@ console.log(
               floorData,
               elevatorRequests: elevatorRefs,
             };
-            // @ts-ignore
-            console.log("recompute", recomputeReason, window.x);
+            console.log(
+              "recompute",
+              recomputeReason,
+              // @ts-ignore
+              JSON.parse(JSON.stringify(window.x))
+            );
             floorData.flatMap((f, floorNum) =>
               Object.values(f)
                 .filter(({ data }) => data.need_elevator !== undefined)
@@ -296,7 +301,7 @@ console.log(
                     elevators[elevatorRef.elevatorNum].goToFloor(
                       floorRef.floorNum
                     );
-                    elevatorData[elevatorRef.elevatorNum].taskQueue.unshift(
+                    elevatorData[elevatorRef.elevatorNum].taskQueue.push(
                       floorRef
                     );
                   }
@@ -326,7 +331,7 @@ console.log(
           // internal
           const initialSeed = Math.PI % 1;
           var seed = initialSeed;
-          const randomSize = (11113 / 7) * 10000;
+          const randomSize = (13 / 7) * 10000;
           const h = (args: number | undefined) => {
             const oldseed = seed;
             seed = (seed * randomSize) % 1;
