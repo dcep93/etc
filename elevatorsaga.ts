@@ -22,6 +22,7 @@ type ElevatorData = {
     [floorNum: number]: { floorNum: number; boarded: number; pressed: number };
   };
   taskQueue: FloorRef[];
+  forced?: boolean;
 }[];
 type ElevatorRef = {
   elevatorNum: number;
@@ -41,6 +42,7 @@ type FloorRef = {
 type Direction = "none" | "up" | "down" | "both";
 
 var now: number;
+var original_random: any;
 
 console.log(
   ([] as string[])
@@ -281,6 +283,7 @@ console.log(
                   queue: elevators[elevatorRef.elevatorNum].destinationQueue,
                   directionData,
                 });
+                if (elevatorData[elevatorRef.elevatorNum].forced) return;
                 elevators[elevatorRef.elevatorNum].stop();
                 elevatorData[elevatorRef.elevatorNum].taskQueue = [];
                 var prevFloor = -1;
@@ -300,7 +303,6 @@ console.log(
                     );
                   }
                 });
-                alert(elevators[elevatorRef.elevatorNum].destinationQueue);
                 setLights(elevatorRef.elevatorNum);
               });
 
@@ -328,18 +330,34 @@ console.log(
           var seed = initialSeed;
           const randomSize = (113 / 7) * 10000;
 
+          // @ts-ignore
+          if (!window.original_random) {
+            // @ts-ignore
+            original_random = _.random;
+          }
+
           function h(args: number) {
             const oldseed = seed;
             seed = (seed * randomSize) % 1;
             if (seed === oldseed) {
               seed = initialSeed;
             }
-            if (args === undefined) return seed;
-            return Math.floor(seed * (args + 1));
+            const old = original_random(args);
+            const rval =
+              args === undefined ? seed : Math.floor(seed * (args + 1));
+            return rval;
           }
           // @ts-ignore
           _.random = (args) => {
             return h(args);
+          };
+          // @ts-ignore
+          window.force = (elevatorNum: number, floors: number[]) => {
+            elevatorData[elevatorNum].forced = true;
+            elevators[elevatorNum].stop();
+            floors.forEach((floorNum) =>
+              elevators[elevatorNum].goToFloor(floorNum)
+            );
           };
           console.clear();
           console.log("init");
@@ -418,6 +436,7 @@ console.log(
             });
 
             elevator.on("floor_button_pressed", function (floorNum) {
+              if (floorNum === elevator.currentFloor()) return;
               const direction =
                 floorNum > elevator.currentFloor() ? "up" : "down";
               elevatorData[elevatorNum].buttons[floorNum] = {
