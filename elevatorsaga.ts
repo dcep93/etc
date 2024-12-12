@@ -63,7 +63,7 @@ console.log(
             );
             const canPivot =
               currDist > 0 &&
-              elevatorRef.proposedTaskQueue[0].direction &&
+              elevatorRef.proposedTaskQueue[0]?.direction &&
               elevatorRef.proposedTaskQueue[0].direction !==
                 (elevatorData[elevatorRef.elevatorNum].floorFloat >
                 floorRef.floorNum
@@ -104,7 +104,6 @@ console.log(
           }
           // given an elevator's queue, what order should it proceed?
           function getDirectionValue(proposedElevatorRef: ElevatorRef) {
-            return [];
             return [
               // penalize if far from current destination
               elevators[proposedElevatorRef.elevatorNum].destinationQueue[0] !==
@@ -199,6 +198,7 @@ console.log(
               elevatorData,
               floorData,
               elevatorRequests: elevatorRefs,
+              seed,
             };
             console.log(
               "recompute",
@@ -235,8 +235,10 @@ console.log(
             elevatorRefs
               .filter(
                 (elevatorRef) =>
-                  elevatorData[elevatorRef.elevatorNum].taskQueue.length > 0 ||
-                  elevatorRef.proposedTaskQueue.length > 0
+                  elevatorData[elevatorRef.elevatorNum].taskQueue
+                    .map((f) => f.floorNum)
+                    .join(",") !==
+                  elevatorRef.proposedTaskQueue.map((f) => f.floorNum).join(",")
               )
               .map((elevatorRef) => {
                 elevatorRef.proposedTaskQueue.sort(
@@ -270,12 +272,13 @@ console.log(
                       proposedTaskQueue,
                     }).reduce((a, b) => a + b, 0),
                   }));
-                console.log("elevator", {
-                  elevatorNum: elevatorRef.elevatorNum,
-                  c: elevatorData[elevatorRef.elevatorNum].floorFloat,
-                  queue: elevators[elevatorRef.elevatorNum].destinationQueue,
-                  directionData,
-                });
+                if (false)
+                  console.log("elevator", {
+                    elevatorNum: elevatorRef.elevatorNum,
+                    c: elevatorData[elevatorRef.elevatorNum].floorFloat,
+                    queue: elevators[elevatorRef.elevatorNum].destinationQueue,
+                    directionData,
+                  });
                 elevators[elevatorRef.elevatorNum].stop();
                 elevatorData[elevatorRef.elevatorNum].taskQueue = [];
                 var prevFloor = -1;
@@ -320,8 +323,9 @@ console.log(
           // internal
           const initialSeed = Math.PI % 1;
           var seed = initialSeed;
-          const randomSize = (13 / 7) * 10000;
-          const h = (args: number | undefined) => {
+          const randomSize = (113 / 7) * 10000;
+
+          function h(args: number) {
             const oldseed = seed;
             seed = (seed * randomSize) % 1;
             if (seed === oldseed) {
@@ -329,7 +333,7 @@ console.log(
             }
             if (args === undefined) return seed;
             return Math.floor(seed * (args + 1));
-          };
+          }
           // @ts-ignore
           _.random = (args) => {
             return h(args);
@@ -338,8 +342,7 @@ console.log(
           console.log("init");
 
           var alerting = true;
-          // @ts-ignore
-          window.alert = (obj: string | number) => {
+          const alert = (obj: string | number) => {
             // @ts-ignore
             if (!alerting || !window.confirm(JSON.stringify(obj))) {
               alerting = false;
