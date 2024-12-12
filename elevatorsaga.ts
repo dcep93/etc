@@ -300,6 +300,7 @@ console.log(
                     );
                   }
                 });
+                alert(elevators[elevatorRef.elevatorNum].destinationQueue);
                 setLights(elevatorRef.elevatorNum);
               });
 
@@ -344,7 +345,7 @@ console.log(
           console.log("init");
 
           var alerting = true;
-          const alert = (obj: string | number) => {
+          const alert = (obj: any) => {
             // @ts-ignore
             if (!alerting || !window.confirm(JSON.stringify(obj))) {
               alerting = false;
