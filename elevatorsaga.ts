@@ -272,13 +272,12 @@ console.log(
                       proposedTaskQueue,
                     }).reduce((a, b) => a + b, 0),
                   }));
-                if (false)
-                  console.log("elevator", {
-                    elevatorNum: elevatorRef.elevatorNum,
-                    c: elevatorData[elevatorRef.elevatorNum].floorFloat,
-                    queue: elevators[elevatorRef.elevatorNum].destinationQueue,
-                    directionData,
-                  });
+                console.log("elevator", {
+                  elevatorNum: elevatorRef.elevatorNum,
+                  c: elevatorData[elevatorRef.elevatorNum].floorFloat,
+                  queue: elevators[elevatorRef.elevatorNum].destinationQueue,
+                  directionData,
+                });
                 elevators[elevatorRef.elevatorNum].stop();
                 elevatorData[elevatorRef.elevatorNum].taskQueue = [];
                 var prevFloor = -1;
