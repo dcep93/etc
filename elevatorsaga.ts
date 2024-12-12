@@ -69,7 +69,7 @@ console.log(
                 floorRef.floorNum
                   ? "down"
                   : "up");
-            const rval = [
+            const parts = [
               shouldPivot && !canPivot ? Number.NEGATIVE_INFINITY : 0,
 
               // penalize pivoting
@@ -83,22 +83,24 @@ console.log(
               -1 * elevators[elevatorRef.elevatorNum].loadFactor(),
 
               // penalize if going the wrong way
-              canPivot ? Number.NEGATIVE_INFINITY : 0,
+              canPivot ? -100 : 0,
 
               // reward if we are already there
               currDist === 0 ? 1000 : 0,
               // penalize if far
               -20 * currDist,
-            ].reduce((a, b) => a + b);
+            ];
+            const rval = parts.reduce((a, b) => a + b);
             console.log("floor", {
+              rval,
+              shouldPivot,
               elevatorNum: elevatorRef.elevatorNum,
               ef: elevatorData[elevatorRef.elevatorNum].floorFloat,
               floorNum: floorRef.floorNum,
               lf: elevators[elevatorRef.elevatorNum].loadFactor(),
+              parts,
               // eDirection: elevatorData[elevatorRef.elevatorNum].direction,
               // floorDirection: floorRef.direction,
-              shouldPivot,
-              rval,
             });
             return rval;
           }
@@ -225,6 +227,7 @@ console.log(
                       }))
                     )
                     .sort((a, b) => b.score - a.score)[0];
+
                   if (bestRequest?.score > Number.NEGATIVE_INFINITY) {
                     bestRequest.elevatorRef.proposedTaskQueue.push(
                       bestRequest.floorRef
