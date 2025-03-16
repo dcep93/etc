@@ -327,7 +327,7 @@ console.log(
           // internal
           const initialSeed = Math.PI % 1;
           var seed = initialSeed;
-          const randomSize = (113 / 7) * 10000;
+          const randomSize = (1113 / 7) * 10000;
 
           // @ts-ignore
           if (!window.original_random) {
@@ -342,14 +342,15 @@ console.log(
               seed = initialSeed;
             }
             const old = original_random(args);
+            return old;
             const rval =
               args === undefined ? seed : Math.floor(seed * (args + 1));
             return rval;
           }
           // @ts-ignore
-          _.random = (args) => {
-            return h(args);
-          };
+          // _.random = (args) => {
+          //   return h(args);
+          // };
           // @ts-ignore
           window.force = (elevatorNum: number, floors: number[]) => {
             elevatorData[elevatorNum].forced = true;
@@ -386,6 +387,7 @@ console.log(
           ) {
             elevatorData[elevatorNum].floorFloat = floorNum;
             if (isStopping) {
+              alert(floorNum);
               elevatorData[elevatorNum].lastRef =
                 elevatorData[elevatorNum].taskQueue.shift();
               if (elevatorData[elevatorNum].lastRef) {
